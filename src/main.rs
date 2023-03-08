@@ -87,6 +87,7 @@ async fn handle_client_json_rpc(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
+        "eth_getBlockByNumber" | "eth_getBlockByHash" => multiplexer.proxy_directly(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }
@@ -111,6 +112,7 @@ async fn handle_controller_json_rpc(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
+        "eth_getBlockByNumber" | "eth_getBlockByHash" => multiplexer.proxy_directly(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }

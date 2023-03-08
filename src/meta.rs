@@ -1,7 +1,7 @@
 //! Support for meta methods which return information about the EL itself.
 use crate::{
     multiplexer::Multiplexer,
-    types::{ErrorResponse, QuantityU64, Request, Response},
+    types::{ErrorResponse, JsonValue, QuantityU64, Request, Response},
 };
 use eth2::types::EthSpec;
 use std::time::Duration;
@@ -43,5 +43,21 @@ impl<E: EthSpec> Multiplexer<E> {
             .await
             .map_err(|e| ErrorResponse::parse_error_generic(id.clone(), format!("{e:?}")))?;
         Response::new(id, engine_capabilities.to_response())
+    }
+
+    pub async fn proxy_directly(&self, request: Request) -> Result<Response, ErrorResponse> {
+        let id = request.id;
+
+        // TODO: adjust timeout
+        let timeout = Duration::from_secs(12);
+
+        let result: JsonValue = self
+            .engine
+            .api
+            .rpc_request(&request.method, request.params, timeout)
+            .await
+            .map_err(|e| ErrorResponse::parse_error_generic(id.clone(), format!("{e:?}")))?;
+
+        Response::new(id, result)
     }
 }
