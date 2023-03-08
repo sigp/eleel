@@ -10,7 +10,7 @@ use eth2_network_config::Eth2NetworkConfig;
 use execution_layer::http::{
     ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1, ENGINE_FORKCHOICE_UPDATED_V1,
     ENGINE_FORKCHOICE_UPDATED_V2, ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2,
-    ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2,
+    ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ETH_SYNCING,
 };
 use futures::channel::mpsc::channel;
 use slog::Logger;
@@ -23,6 +23,7 @@ mod fcu;
 mod logging;
 mod multiplexer;
 mod new_payload;
+mod syncing;
 mod transition_config;
 mod types;
 
@@ -83,6 +84,7 @@ async fn handle_client_json_rpc(
             multiplexer.handle_new_payload(request).await
         }
         ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1 => handle_transition_config(request).await,
+        ETH_SYNCING => multiplexer.handle_syncing(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }
@@ -104,6 +106,7 @@ async fn handle_controller_json_rpc(
             multiplexer.handle_controller_new_payload(request).await
         }
         ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1 => handle_transition_config(request).await,
+        ETH_SYNCING => multiplexer.handle_syncing(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }
