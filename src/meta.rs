@@ -1,3 +1,4 @@
+//! Support for meta methods which return information about the EL itself.
 use crate::{
     multiplexer::Multiplexer,
     types::{ErrorResponse, QuantityU64, Request, Response},
@@ -27,5 +28,20 @@ impl<E: EthSpec> Multiplexer<E> {
             value: chain_id.into(),
         };
         Response::new(id, result)
+    }
+
+    pub async fn handle_engine_capabilities(
+        &self,
+        request: Request,
+    ) -> Result<Response, ErrorResponse> {
+        let (id, (_cl_capabilities,)) = request.parse_as::<(Vec<String>,)>()?;
+
+        let max_age = Duration::from_secs(15 * 60);
+        let engine_capabilities = self
+            .engine
+            .get_engine_capabilities(Some(max_age))
+            .await
+            .map_err(|e| ErrorResponse::parse_error_generic(id.clone(), format!("{e:?}")))?;
+        Response::new(id, engine_capabilities.to_response())
     }
 }
