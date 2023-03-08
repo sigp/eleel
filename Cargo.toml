@@ -1,0 +1,43 @@
+[package]
+name = "eleel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+execution_layer = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+tree_hash = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+tree_hash_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+task_executor = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
+axum = "0.6.10"
+lru = "0.10.0"
+serde_json = "1.0.0"
+serde = { version = "1.0.0", features = ["derive"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
+eventsource-client = "0.11.0"
+futures = "0.3.26"
+serde_repr = "0.1.11"
+exit-future = "0.2.0"
+tracing-slog = "0.2.0"
+slog = "2.7.0"
+
+[patch]
+[patch.crates-io]
+eth2_ssz = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2_ssz_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2_ssz_types = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2_hashing = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+tree_hash = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+tree_hash_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+eth2_serde_utils = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+arbitrary = { git = "https://github.com/michaelsproul/arbitrary", rev="a572fd8743012a4f1ada5ee5968b1b3619c427ba" }
+
+[patch."https://github.com/ralexstokes/mev-rs"]
+mev-rs = { git = "https://github.com/ralexstokes//mev-rs", rev = "7813d4a4a564e0754e9aaab2d95520ba437c3889" }
+[patch."https://github.com/ralexstokes/ethereum-consensus"]
+ethereum-consensus = { git = "https://github.com/ralexstokes//ethereum-consensus", rev = "9b0ee0a8a45b968c8df5e7e64ea1c094e16f053d" }
+[patch."https://github.com/ralexstokes/ssz-rs"]
+ssz-rs = { git = "https://github.com/ralexstokes//ssz-rs", rev = "adf1a0b14cef90b9536f28ef89da1fab316465e1" }

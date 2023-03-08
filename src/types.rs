@@ -1,0 +1,164 @@
+use eth2::types::ExecutionBlockHash;
+use execution_layer::ForkchoiceState;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
+pub use execution_layer::{
+    auth::Auth,
+    engines::Engine,
+    json_structures::{
+        JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
+        JsonPayloadStatusV1Status, TransitionConfigurationV1,
+    },
+};
+pub use serde_json::Value as JsonValue;
+pub use task_executor::TaskExecutor;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Request {
+    pub jsonrpc: String,
+    pub method: String,
+    pub params: JsonValue,
+    pub id: JsonValue,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct JsonError {
+    pub code: ErrorCode,
+    pub message: String,
+}
+
+#[derive(Debug, PartialEq, Deserialize_repr, Serialize_repr)]
+#[repr(i32)]
+pub enum ErrorCode {
+    ParseError = -32700,
+    InvalidRequest = -32600,
+    MethodNotFound = -32601,
+    InvalidParams = -32602,
+    InternalError = -32603,
+    ServerError = -32000,
+    UnknownPayload = -38001,
+    InvalidForkChoiceState = -38002,
+    InvalidPayloadAttributes = -38003,
+    TooLargeRequest = -38004,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Response {
+    pub jsonrpc: String,
+    pub id: JsonValue,
+    pub result: JsonValue,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ErrorResponse {
+    pub jsonrpc: String,
+    pub id: JsonValue,
+    pub error: JsonError,
+}
+
+// Duplicated from Lighthouse but with `Hash` and `Eq` implementations added.
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsonForkchoiceStateV1 {
+    pub head_block_hash: ExecutionBlockHash,
+    pub safe_block_hash: ExecutionBlockHash,
+    pub finalized_block_hash: ExecutionBlockHash,
+}
+
+impl From<ForkchoiceState> for JsonForkchoiceStateV1 {
+    fn from(f: ForkchoiceState) -> Self {
+        // Use this verbose deconstruction pattern to ensure no field is left unused.
+        let ForkchoiceState {
+            head_block_hash,
+            safe_block_hash,
+            finalized_block_hash,
+        } = f;
+
+        Self {
+            head_block_hash,
+            safe_block_hash,
+            finalized_block_hash,
+        }
+    }
+}
+
+impl From<JsonForkchoiceStateV1> for ForkchoiceState {
+    fn from(j: JsonForkchoiceStateV1) -> Self {
+        // Use this verbose deconstruction pattern to ensure no field is left unused.
+        let JsonForkchoiceStateV1 {
+            head_block_hash,
+            safe_block_hash,
+            finalized_block_hash,
+        } = j;
+
+        Self {
+            head_block_hash,
+            safe_block_hash,
+            finalized_block_hash,
+        }
+    }
+}
+
+impl Request {
+    pub fn parse_as<T: DeserializeOwned>(self) -> Result<(JsonValue, T), ErrorResponse> {
+        let id = self.id;
+        let params = serde_json::from_value(self.params)
+            .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+        Ok((id, params))
+    }
+}
+
+impl ErrorResponse {
+    pub fn unsupported_method(id: JsonValue, method: &str) -> Self {
+        Self {
+            jsonrpc: "2.0".into(),
+            id,
+            error: JsonError {
+                code: ErrorCode::MethodNotFound,
+                message: format!("method `{method}` not supported"),
+            },
+        }
+    }
+
+    pub fn parse_error(id: JsonValue, error: serde_json::Error) -> Self {
+        Self::parse_error_generic(id, format!("parse error: {error:?}"))
+    }
+
+    pub fn parse_error_generic(id: JsonValue, message: String) -> Self {
+        Self {
+            jsonrpc: "2.0".into(),
+            id,
+            error: JsonError {
+                code: ErrorCode::ParseError,
+                message,
+            },
+        }
+    }
+
+    pub fn invalid_request(id: JsonValue, message: String) -> Self {
+        Self {
+            jsonrpc: "2.0".into(),
+            id,
+            error: JsonError {
+                code: ErrorCode::InvalidRequest,
+                message,
+            },
+        }
+    }
+}
+
+impl Response {
+    pub fn new<T: Serialize>(id: JsonValue, result: T) -> Result<Self, ErrorResponse> {
+        let result =
+            serde_json::to_value(result).map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+        Ok(Self {
+            jsonrpc: "2.0".into(),
+            id,
+            result,
+        })
+    }
+}
