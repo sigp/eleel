@@ -19,6 +19,7 @@ pub use task_executor::TaskExecutor;
 pub struct Request {
     pub jsonrpc: String,
     pub method: String,
+    #[serde(default)]
     pub params: JsonValue,
     pub id: JsonValue,
 }
