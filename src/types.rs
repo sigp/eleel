@@ -162,3 +162,10 @@ impl Response {
         })
     }
 }
+
+#[derive(Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct QuantityU64 {
+    #[serde(with = "serde_utils::u64_hex_be")]
+    pub value: u64,
+}
