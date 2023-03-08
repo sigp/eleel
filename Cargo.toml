@@ -10,6 +10,7 @@ tree_hash_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = 
 task_executor = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
 eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
 eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+ethereum_serde_utils = "0.5.0"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = "0.6.10"
 lru = "0.10.0"

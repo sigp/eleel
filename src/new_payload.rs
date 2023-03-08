@@ -8,6 +8,7 @@ use crate::{
 };
 use eth2::types::{EthSpec, ExecutionBlockHash, ForkName, Slot};
 use execution_layer::http::ENGINE_NEW_PAYLOAD_V1;
+use serde::{Deserialize, Serialize};
 
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_new_payload(
@@ -69,8 +70,14 @@ impl<E: EthSpec> Multiplexer<E> {
 
         let (id, (payload_json,)) = request.parse_as::<(JsonValue,)>()?;
 
-        let Some(timestamp) = payload_json.get("timestamp").and_then(|value| value.as_u64()) else {
-            return Err(ErrorResponse::parse_error_generic(id.clone(), format!("unable to parse payload timestamp")));
+        let Timestamp { timestamp } = if let Some(timestamp_json) = payload_json.get("timestamp") {
+            serde_json::from_value(timestamp_json.clone())
+                .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?
+        } else {
+            return Err(ErrorResponse::parse_error_generic(
+                id.clone(),
+                format!("timestamp string missing"),
+            ));
         };
 
         let slot = self.timestamp_to_slot(timestamp).ok_or_else(|| {
@@ -113,4 +120,11 @@ impl<E: EthSpec> Multiplexer<E> {
         }
         None
     }
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(transparent)]
+struct Timestamp {
+    #[serde(with = "serde_utils::u64_hex_be")]
+    timestamp: u64,
 }

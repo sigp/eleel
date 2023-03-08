@@ -1643,6 +1643,7 @@ dependencies = [
  "axum 0.6.10",
  "eth2",
  "eth2_network_config",
+ "ethereum_serde_utils",
  "eventsource-client",
  "execution_layer",
  "exit-future",
@@ -2064,6 +2065,19 @@ dependencies = [
  "primitive-types 0.12.1",
  "scale-info",
  "uint",
+]
+
+[[package]]
+name = "ethereum_serde_utils"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adbe1498020586dfe908cec0becafd15ffe7c37142a35dc2ea60273c71c37530"
+dependencies = [
+ "ethereum-types 0.14.1",
+ "hex",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
