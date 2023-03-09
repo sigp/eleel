@@ -4,7 +4,11 @@ use crate::{
     transition_config::handle_transition_config,
     types::{ErrorResponse, Request, Response, TaskExecutor},
 };
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{rejection::JsonRejection, State},
+    routing::post,
+    Json, Router,
+};
 use eth2::types::MainnetEthSpec;
 use eth2_network_config::Eth2NetworkConfig;
 use execution_layer::http::{
@@ -74,8 +78,11 @@ async fn new_task_executor(log: Logger) -> TaskExecutor {
 
 async fn handle_client_json_rpc(
     State(multiplexer): State<Arc<Multiplexer<E>>>,
-    Json(request): Json<Request>,
+    maybe_request: Result<Json<Request>, JsonRejection>,
 ) -> Result<Json<Response>, Json<ErrorResponse>> {
+    let Json(request) = maybe_request
+        .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
+
     match request.method.as_str() {
         ENGINE_FORKCHOICE_UPDATED_V1 | ENGINE_FORKCHOICE_UPDATED_V2 => {
             multiplexer.handle_fcu(request).await
@@ -101,8 +108,11 @@ async fn handle_client_json_rpc(
 
 async fn handle_controller_json_rpc(
     State(multiplexer): State<Arc<Multiplexer<E>>>,
-    Json(request): Json<Request>,
+    maybe_request: Result<Json<Request>, JsonRejection>,
 ) -> Result<Json<Response>, Json<ErrorResponse>> {
+    let Json(request) = maybe_request
+        .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
+
     match request.method.as_str() {
         ENGINE_FORKCHOICE_UPDATED_V1 | ENGINE_FORKCHOICE_UPDATED_V2 => {
             multiplexer.handle_controller_fcu(request).await
