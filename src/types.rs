@@ -19,9 +19,14 @@ pub use task_executor::TaskExecutor;
 pub struct Request {
     pub jsonrpc: String,
     pub method: String,
-    #[serde(default)]
+    #[serde(default = "empty_params")]
     pub params: JsonValue,
     pub id: JsonValue,
+}
+
+/// Params may be empty. Prysm sends this for eth_chainId.
+fn empty_params() -> JsonValue {
+    JsonValue::Array(vec![])
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
