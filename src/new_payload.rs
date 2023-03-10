@@ -8,12 +8,14 @@ use crate::{
 };
 use eth2::types::{EthSpec, ExecutionBlockHash, ForkName, Slot};
 use execution_layer::http::ENGINE_NEW_PAYLOAD_V1;
+use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_new_payload(
         &self,
         request: Request,
     ) -> Result<Response, ErrorResponse> {
+        tracing::info!("processing payload from controller");
         let (id, execution_payload) = self.decode_execution_payload(request)?;
 
         // TODO: verify block hash
@@ -41,15 +43,28 @@ impl<E: EthSpec> Multiplexer<E> {
     }
 
     pub async fn handle_new_payload(&self, request: Request) -> Result<Response, ErrorResponse> {
+        tracing::info!("processing new payload from client");
         let (id, execution_payload) = self.decode_execution_payload(request)?;
 
         // TODO: verify block hash
         let block_hash = execution_payload.block_hash();
 
+        // Wait a short time for a definite response from the EL. Chances are it's busy processing
+        // the payload sent by the controlling BN.
+        let start = Instant::now();
+        while start.elapsed().as_millis() < self.config.new_payload_wait_millis {
+            if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
+                return Response::new(id, status);
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+
+        // Try again to get any status from the cache, or fall back on a SYNCING response.
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, false).await
         {
             status
         } else {
+            tracing::info!("sending SYNCING response on newPayload");
             // Synthetic syncing response.
             JsonPayloadStatusV1 {
                 status: JsonPayloadStatusV1Status::Syncing,

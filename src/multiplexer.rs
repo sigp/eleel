@@ -24,6 +24,7 @@ pub struct Multiplexer<E: EthSpec> {
     pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, JsonPayloadStatusV1>>,
     pub genesis_time: u64,
     pub spec: ChainSpec,
+    pub config: Config,
     pub log: Logger,
     _phantom: PhantomData<E>,
 }
@@ -66,6 +67,7 @@ impl<E: EthSpec> Multiplexer<E> {
             new_payload_cache,
             genesis_time,
             spec,
+            config,
             log,
             _phantom: PhantomData,
         })

@@ -6,4 +6,6 @@ pub struct Config {
     pub fcu_cache_size: usize,
     pub new_payload_cache_size: usize,
     pub network_config: Eth2NetworkConfig,
+    pub new_payload_wait_millis: u128,
+    pub fcu_wait_millis: u128,
 }

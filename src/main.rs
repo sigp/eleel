@@ -51,6 +51,8 @@ async fn main() {
         fcu_cache_size: 64,
         new_payload_cache_size: 64,
         network_config,
+        new_payload_wait_millis: 2000,
+        fcu_wait_millis: 1000,
     };
 
     let multiplexer = Arc::new(Multiplexer::<E>::new(config, executor, log).unwrap());
