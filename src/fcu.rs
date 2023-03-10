@@ -7,17 +7,15 @@ use crate::{
     },
 };
 use eth2::types::EthSpec;
+use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
-        let (id, (fcu, payload_attributes)) =
+        let (id, (fcu, _payload_attributes)) =
             request.parse_as::<(JsonForkchoiceStateV1, JsonValue)>()?;
 
         let head_hash = fcu.head_block_hash;
-
-        if !payload_attributes.is_null() {
-            tracing::info!(head_hash = ?head_hash, "ignoring payload attributes from controller fcU");
-        }
+        tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
 
         let response = if let Some(response) = self.get_cached_fcu(&fcu, true).await {
             response
@@ -54,6 +52,19 @@ impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
         let (id, (fcu, _payload_attributes)) =
             request.parse_as::<(JsonForkchoiceStateV1, JsonValue)>()?;
+
+        let head_hash = fcu.head_block_hash;
+        tracing::info!(head_hash = ?head_hash, "processing fcU from client");
+
+        // Wait a short time for a definite response from the EL. Chances are it's busy processing
+        // the fcU sent by the controlling BN.
+        let start = Instant::now();
+        while start.elapsed().as_millis() < self.config.fcu_wait_millis {
+            if let Some(response) = self.get_cached_fcu(&fcu, true).await {
+                return Response::new(id, response);
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
 
         // Check cache, allowing for indefinite Syncing/Accepted responses.
         let response = if let Some(response) = self.get_cached_fcu(&fcu, false).await {
