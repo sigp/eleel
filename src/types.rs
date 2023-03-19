@@ -15,6 +15,13 @@ pub use serde_json::Value as JsonValue;
 pub use task_executor::TaskExecutor;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Requests {
+    Single(Request),
+    Multiple(Vec<Request>),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Request {
     pub jsonrpc: String,
@@ -64,6 +71,13 @@ pub struct ErrorResponse {
     pub jsonrpc: String,
     pub id: JsonValue,
     pub error: JsonError,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Responses {
+    Single(Result<Response, ErrorResponse>),
+    Multiple(Vec<Result<Response, ErrorResponse>>),
 }
 
 // Duplicated from Lighthouse but with `Hash` and `Eq` implementations added.

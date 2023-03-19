@@ -2,7 +2,7 @@ use crate::{
     config::Config,
     multiplexer::Multiplexer,
     transition_config::handle_transition_config,
-    types::{ErrorResponse, Request, Response, TaskExecutor},
+    types::{ErrorResponse, Request, Requests, Response, Responses, TaskExecutor},
 };
 use axum::{
     extract::{rejection::JsonRejection, State},
@@ -80,11 +80,38 @@ async fn new_task_executor(log: Logger) -> TaskExecutor {
 
 async fn handle_client_json_rpc(
     State(multiplexer): State<Arc<Multiplexer<E>>>,
-    maybe_request: Result<Json<Request>, JsonRejection>,
-) -> Result<Json<Response>, Json<ErrorResponse>> {
-    let Json(request) = maybe_request
-        .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
+    maybe_requests: Result<Json<Requests>, JsonRejection>,
+) -> Json<Responses> {
+    let requests = match maybe_requests {
+        Ok(Json(requests)) => requests,
+        Err(e) => {
+            return Json(Responses::Single(Err(ErrorResponse::parse_error_generic(
+                serde_json::json!(0),
+                e.body_text(),
+            ))));
+        }
+    };
 
+    match requests {
+        Requests::Single(request) => Json(Responses::Single(
+            process_client_request(&multiplexer, request).await,
+        )),
+        Requests::Multiple(requests) => {
+            let mut results = vec![];
+
+            for request in requests {
+                results.push(process_client_request(&multiplexer, request).await);
+            }
+
+            Json(Responses::Multiple(results))
+        }
+    }
+}
+
+async fn process_client_request(
+    multiplexer: &Multiplexer<E>,
+    request: Request,
+) -> Result<Response, ErrorResponse> {
     match request.method.as_str() {
         ENGINE_FORKCHOICE_UPDATED_V1 | ENGINE_FORKCHOICE_UPDATED_V2 => {
             multiplexer.handle_fcu(request).await
@@ -104,8 +131,6 @@ async fn handle_client_json_rpc(
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }
-    .map(|response| Json(response))
-    .map_err(|err| Json(err))
 }
 
 async fn handle_controller_json_rpc(
