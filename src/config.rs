@@ -8,4 +8,5 @@ pub struct Config {
     pub network_config: Eth2NetworkConfig,
     pub new_payload_wait_millis: u128,
     pub fcu_wait_millis: u128,
+    pub body_limit_mb: usize,
 }

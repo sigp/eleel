@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use axum::{
-    extract::{rejection::JsonRejection, State},
+    extract::{rejection::JsonRejection, DefaultBodyLimit, State},
     routing::post,
     Json, Router,
 };
@@ -36,6 +36,8 @@ mod types;
 // TODO: allow other specs
 type E = MainnetEthSpec;
 
+const MEGABYTE: usize = 1024 * 1024;
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -55,14 +57,17 @@ async fn main() {
         network_config,
         new_payload_wait_millis: 2000,
         fcu_wait_millis: 1000,
+        body_limit_mb: 128,
     };
 
+    let body_limit_mb = config.body_limit_mb;
     let multiplexer = Arc::new(Multiplexer::<E>::new(config, executor, log).unwrap());
 
     let app = Router::new()
         .route("/", post(handle_client_json_rpc))
         .route("/canonical", post(handle_controller_json_rpc))
-        .with_state(multiplexer);
+        .with_state(multiplexer)
+        .layer(DefaultBodyLimit::max(body_limit_mb * MEGABYTE));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8552));
     tracing::debug!("listening on {}", addr);
