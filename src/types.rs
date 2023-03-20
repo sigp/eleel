@@ -73,11 +73,27 @@ pub struct ErrorResponse {
     pub error: JsonError,
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MaybeErrorResponse {
+    Ok(Response),
+    Err(ErrorResponse),
+}
+
+impl From<Result<Response, ErrorResponse>> for MaybeErrorResponse {
+    fn from(res: Result<Response, ErrorResponse>) -> Self {
+        match res {
+            Ok(x) => Self::Ok(x),
+            Err(x) => Self::Err(x),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Responses {
-    Single(Result<Response, ErrorResponse>),
-    Multiple(Vec<Result<Response, ErrorResponse>>),
+    Single(MaybeErrorResponse),
+    Multiple(Vec<MaybeErrorResponse>),
 }
 
 // Duplicated from Lighthouse but with `Hash` and `Eq` implementations added.

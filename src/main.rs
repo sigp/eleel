@@ -2,7 +2,9 @@ use crate::{
     config::Config,
     multiplexer::Multiplexer,
     transition_config::handle_transition_config,
-    types::{ErrorResponse, Request, Requests, Response, Responses, TaskExecutor},
+    types::{
+        ErrorResponse, MaybeErrorResponse, Request, Requests, Response, Responses, TaskExecutor,
+    },
 };
 use axum::{
     extract::{rejection::JsonRejection, State},
@@ -85,22 +87,21 @@ async fn handle_client_json_rpc(
     let requests = match maybe_requests {
         Ok(Json(requests)) => requests,
         Err(e) => {
-            return Json(Responses::Single(Err(ErrorResponse::parse_error_generic(
-                serde_json::json!(0),
-                e.body_text(),
-            ))));
+            return Json(Responses::Single(MaybeErrorResponse::Err(
+                ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()),
+            )));
         }
     };
 
     match requests {
         Requests::Single(request) => Json(Responses::Single(
-            process_client_request(&multiplexer, request).await,
+            process_client_request(&multiplexer, request).await.into(),
         )),
         Requests::Multiple(requests) => {
             let mut results = vec![];
 
             for request in requests {
-                results.push(process_client_request(&multiplexer, request).await);
+                results.push(process_client_request(&multiplexer, request).await.into());
             }
 
             Json(Responses::Multiple(results))
