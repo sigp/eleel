@@ -86,6 +86,7 @@ impl<E: EthSpec> Multiplexer<E> {
         let start = Instant::now();
         while start.elapsed().as_millis() < self.config.fcu_wait_millis {
             if let Some(response) = self.get_cached_fcu(&fcu, true).await {
+                tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
                 return Response::new(id, response);
             }
             tokio::time::sleep(Duration::from_millis(50)).await;
