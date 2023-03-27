@@ -93,7 +93,9 @@ impl<E: EthSpec> Multiplexer<E> {
 
         // Check cache, allowing for indefinite Syncing/Accepted responses.
         let response = if let Some(response) = self.get_cached_fcu(&fcu, false).await {
-            if !Self::is_definite(&response.payload_status) {
+            if Self::is_definite(&response.payload_status) {
+                tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
+            } else {
                 tracing::info!("sending cached indefinite status on fcU");
             }
             response
