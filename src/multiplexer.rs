@@ -32,7 +32,7 @@ pub struct Multiplexer<E: EthSpec> {
 impl<E: EthSpec> Multiplexer<E> {
     pub fn new(config: Config, executor: TaskExecutor, log: Logger) -> Result<Self, String> {
         let engine: Engine = {
-            let jwt_secret_path = PathBuf::from(&config.jwt_secret_path);
+            let jwt_secret_path = PathBuf::from(&config.ee_jwt_secret);
             let jwt_id = Some("eleel".to_string());
             let jwt_version = None;
 
@@ -42,7 +42,7 @@ impl<E: EthSpec> Multiplexer<E> {
                 .map_err(|e| format!("JWT secret error: {e:?}"))?;
 
             let url =
-                FromStr::from_str(&config.el_url).map_err(|e| format!("Invalid EL URL: {e:?}"))?;
+                FromStr::from_str(&config.ee_url).map_err(|e| format!("Invalid EL URL: {e:?}"))?;
             let api = HttpJsonRpc::new_with_auth(url, auth, execution_timeout_multiplier)
                 .map_err(|e| format!("Error connecting to EL: {e:?}"))?;
 
@@ -57,8 +57,8 @@ impl<E: EthSpec> Multiplexer<E> {
         ));
 
         // Derived values.
-        let spec = config.network_config.chain_spec::<E>()?;
-        let genesis_state = config.network_config.beacon_state::<E>()?;
+        let spec = config.network.network.chain_spec::<E>()?;
+        let genesis_state = config.network.network.beacon_state::<E>()?;
         let genesis_time = genesis_state.genesis_time();
 
         Ok(Self {

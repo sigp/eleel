@@ -24,6 +24,7 @@ serde_repr = "0.1.11"
 exit-future = "0.2.0"
 tracing-slog = "0.2.0"
 slog = "2.7.0"
+clap = { version = "4.0.0", features = ["derive"] }
 
 [patch]
 [patch.crates-io]

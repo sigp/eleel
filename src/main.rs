@@ -11,8 +11,8 @@ use axum::{
     routing::post,
     Json, Router,
 };
+use clap::Parser;
 use eth2::types::MainnetEthSpec;
-use eth2_network_config::Eth2NetworkConfig;
 use execution_layer::http::{
     ENGINE_EXCHANGE_CAPABILITIES, ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1,
     ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2, ENGINE_GET_PAYLOAD_V1,
@@ -45,20 +45,7 @@ async fn main() {
     let log = crate::logging::new_logger();
     let executor = new_task_executor(log.clone()).await;
 
-    // TODO: configurable
-    let network_config = Eth2NetworkConfig::constant("mainnet").unwrap().unwrap();
-
-    // TODO: CLI params
-    let config = Config {
-        el_url: "http://localhost:8551".into(),
-        jwt_secret_path: "/tmp/jwtsecret".into(),
-        fcu_cache_size: 64,
-        new_payload_cache_size: 64,
-        network_config,
-        new_payload_wait_millis: 2000,
-        fcu_wait_millis: 1000,
-        body_limit_mb: 128,
-    };
+    let config = Config::parse();
 
     let body_limit_mb = config.body_limit_mb;
     let multiplexer = Arc::new(Multiplexer::<E>::new(config, executor, log).unwrap());
