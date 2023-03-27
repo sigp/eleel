@@ -19,14 +19,24 @@ impl<E: EthSpec> Multiplexer<E> {
         let (id, execution_payload) = self.decode_execution_payload(request)?;
 
         // TODO: verify block hash
-        let block_hash = execution_payload.block_hash();
+        let block_hash = *execution_payload.block_hash();
 
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
             status
         } else {
             // Send payload to the real EL.
             match self.engine.api.new_payload(execution_payload.into()).await {
-                Ok(status) => status.into(),
+                Ok(status) => {
+                    let json_status = JsonPayloadStatusV1::from(status);
+
+                    // Update newPayload cache.
+                    self.new_payload_cache
+                        .lock()
+                        .await
+                        .put(block_hash, json_status.clone());
+
+                    json_status
+                }
                 Err(e) => {
                     // Return an error to the controlling CL.
                     // TODO: consider flag to return SYNCING here (after block hash verif).
