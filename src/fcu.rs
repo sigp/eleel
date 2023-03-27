@@ -29,7 +29,7 @@ impl<E: EthSpec> Multiplexer<E> {
             {
                 Ok(response) => {
                     let json_response = JsonForkchoiceUpdatedV1Response::from(response);
-                    let status = json_response.payload_status.clone();
+                    let status = json_response.payload_status.status;
 
                     let mut cache = self.fcu_cache.lock().await;
 
@@ -79,7 +79,7 @@ impl<E: EthSpec> Multiplexer<E> {
             request.parse_as::<(JsonForkchoiceStateV1, JsonValue)>()?;
 
         let head_hash = fcu.head_block_hash;
-        tracing::info!(head_hash = ?head_hash, "processing fcU from client");
+        tracing::info!(id = ?id, head_hash = ?head_hash, "processing fcU from client");
 
         // Wait a short time for a definite response from the EL. Chances are it's busy processing
         // the fcU sent by the controlling BN.
@@ -99,7 +99,7 @@ impl<E: EthSpec> Multiplexer<E> {
             response
         } else {
             // Synthesise a syncing response to send, but do not cache it.
-            tracing::info!("sending SYNCING status on fcU");
+            tracing::info!(id = ?id, head_hash = ?head_hash, "sending SYNCING status on fcU");
             JsonForkchoiceUpdatedV1Response {
                 payload_status: JsonPayloadStatusV1 {
                     status: JsonPayloadStatusV1Status::Syncing,
