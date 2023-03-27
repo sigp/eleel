@@ -29,10 +29,35 @@ impl<E: EthSpec> Multiplexer<E> {
             {
                 Ok(response) => {
                     let json_response = JsonForkchoiceUpdatedV1Response::from(response);
-                    self.fcu_cache
-                        .lock()
-                        .await
-                        .put(fcu.clone(), json_response.clone());
+                    let status = json_response.payload_status.clone();
+
+                    let mut cache = self.fcu_cache.lock().await;
+
+                    let cached = if let Some(existing_entry) = cache.get_mut(&fcu) {
+                        if Self::is_definite(&existing_entry.payload_status) {
+                            tracing::debug!(
+                                head_hash = ?head_hash,
+                                "ignoring redundant fcU cache update"
+                            );
+                            false
+                        } else {
+                            *existing_entry = json_response.clone();
+                            true
+                        }
+                    } else {
+                        cache.put(fcu.clone(), json_response.clone());
+                        true
+                    };
+                    drop(cache);
+
+                    if cached {
+                        tracing::info!(
+                            head_hash = ?head_hash,
+                            status = ?status,
+                            "cached fcU from controller"
+                        );
+                    }
+
                     json_response
                 }
                 Err(e) => {
@@ -68,9 +93,13 @@ impl<E: EthSpec> Multiplexer<E> {
 
         // Check cache, allowing for indefinite Syncing/Accepted responses.
         let response = if let Some(response) = self.get_cached_fcu(&fcu, false).await {
+            if !Self::is_definite(&response.payload_status) {
+                tracing::info!("sending cached indefinite status on fcU");
+            }
             response
         } else {
             // Synthesise a syncing response to send, but do not cache it.
+            tracing::info!("sending SYNCING status on fcU");
             JsonForkchoiceUpdatedV1Response {
                 payload_status: JsonPayloadStatusV1 {
                     status: JsonPayloadStatusV1Status::Syncing,

@@ -72,6 +72,9 @@ impl<E: EthSpec> Multiplexer<E> {
         // Try again to get any status from the cache, or fall back on a SYNCING response.
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, false).await
         {
+            if !Self::is_definite(&status) {
+                tracing::info!("sending indefinite status on newPayload");
+            }
             status
         } else {
             tracing::info!("sending SYNCING response on newPayload");
