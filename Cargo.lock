@@ -1697,6 +1697,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "slog",
+ "strum",
  "task_executor",
  "tokio",
  "tracing",

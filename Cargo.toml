@@ -25,6 +25,7 @@ exit-future = "0.2.0"
 tracing-slog = "0.2.0"
 slog = "2.7.0"
 clap = { version = "4.0.0", features = ["derive"] }
+strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 
 [patch]
 [patch.crates-io]

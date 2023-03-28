@@ -22,6 +22,8 @@ pub struct Multiplexer<E: EthSpec> {
     pub engine: Engine,
     pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response>>,
     pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, JsonPayloadStatusV1>>,
+    pub justified_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
+    pub finalized_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
     pub genesis_time: u64,
     pub spec: ChainSpec,
     pub config: Config,
@@ -55,6 +57,14 @@ impl<E: EthSpec> Multiplexer<E> {
         let new_payload_cache = Mutex::new(LruCache::new(
             NonZeroUsize::new(config.new_payload_cache_size).ok_or_else(|| "invalid cache size")?,
         ));
+        let justified_block_cache = Mutex::new(LruCache::new(
+            NonZeroUsize::new(config.justified_block_cache_size)
+                .ok_or_else(|| "invalid cache size")?,
+        ));
+        let finalized_block_cache = Mutex::new(LruCache::new(
+            NonZeroUsize::new(config.justified_block_cache_size)
+                .ok_or_else(|| "invalid cache size")?,
+        ));
 
         // Derived values.
         let spec = config.network.network.chain_spec::<E>()?;
@@ -65,6 +75,8 @@ impl<E: EthSpec> Multiplexer<E> {
             engine,
             fcu_cache,
             new_payload_cache,
+            justified_block_cache,
+            finalized_block_cache,
             genesis_time,
             spec,
             config,

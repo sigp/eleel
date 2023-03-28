@@ -1,5 +1,6 @@
 //! Handler for forkchoiceUpdated.
 use crate::{
+    config::FcuMatching,
     multiplexer::Multiplexer,
     types::{
         ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
@@ -51,6 +52,14 @@ impl<E: EthSpec> Multiplexer<E> {
                     drop(cache);
 
                     if cached {
+                        self.justified_block_cache
+                            .lock()
+                            .await
+                            .put(fcu.safe_block_hash, ());
+                        self.finalized_block_cache
+                            .lock()
+                            .await
+                            .put(fcu.finalized_block_hash, ());
                         tracing::info!(
                             head_hash = ?head_hash,
                             status = ?status,
@@ -124,12 +133,38 @@ impl<E: EthSpec> Multiplexer<E> {
         definite_only: bool,
     ) -> Option<JsonForkchoiceUpdatedV1Response> {
         let mut cache = self.fcu_cache.lock().await;
-        if let Some(existing_response) = cache.get(fcu) {
-            if !definite_only || Self::is_definite(&existing_response.payload_status) {
-                return Some(existing_response.clone());
+
+        let existing_response = match self.config.fcu_matching {
+            FcuMatching::Exact => cache.get(fcu),
+            FcuMatching::Loose | FcuMatching::HeadOnly => {
+                cache.iter().find_map(|(cached_fcu, res)| {
+                    (cached_fcu.head_block_hash == fcu.head_block_hash).then_some(res)
+                })
             }
+        }?;
+        let just_and_fin_ok = match self.config.fcu_matching {
+            FcuMatching::Exact | FcuMatching::HeadOnly => true,
+            FcuMatching::Loose => {
+                self.justified_block_cache
+                    .lock()
+                    .await
+                    .contains(&fcu.safe_block_hash)
+                    && self
+                        .finalized_block_cache
+                        .lock()
+                        .await
+                        .contains(&fcu.finalized_block_hash)
+            }
+        };
+
+        let definite_enough =
+            !definite_only || Self::is_definite(&existing_response.payload_status);
+
+        if just_and_fin_ok && definite_enough {
+            Some(existing_response.clone())
+        } else {
+            None
         }
-        None
     }
 
     pub fn is_definite(status: &JsonPayloadStatusV1) -> bool {

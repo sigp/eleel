@@ -1,6 +1,7 @@
-use clap::Parser;
+use clap::{builder::PossibleValue, Parser, ValueEnum};
 use eth2_network_config::Eth2NetworkConfig;
 use std::str::FromStr;
+use strum::{EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Parser)]
 #[command(about = "Ethereum execution engine multiplexer")]
@@ -17,6 +18,15 @@ pub struct Config {
     /// Number of recent forkchoiceUpdated messages to cache in memory.
     #[arg(long, value_name = "N", default_value = "64")]
     pub fcu_cache_size: usize,
+    /// Number of justified block hashes to cache in memory.
+    #[arg(long, value_name = "N", default_value = "4")]
+    pub justified_block_cache_size: usize,
+    /// Number of finalized block hashes to cache in memory.
+    #[arg(long, value_name = "N", default_value = "4")]
+    pub finalized_block_cache_size: usize,
+    /// Choose the type of matching to use before returning a VALID fcU message to a client.
+    #[arg(long, value_name = "NAME", default_value = "loose", value_enum)]
+    pub fcu_matching: FcuMatching,
     /// Network that the consensus and execution nodes are operating on.
     #[arg(long, value_name = "NAME", default_value = "mainnet")]
     pub network: Network,
@@ -53,5 +63,45 @@ impl FromStr for Network {
         Eth2NetworkConfig::constant(s)?
             .map(|network| Network { network })
             .ok_or_else(|| format!("unknown network: {s}"))
+    }
+}
+
+#[derive(EnumString, IntoStaticStr, Debug, Clone, Copy)]
+#[strum(serialize_all = "kebab-case")]
+pub enum FcuMatching {
+    /// Client fcU must match a prior fcU from the controller *exactly*.
+    Exact,
+    /// Client fcU must reference head, justified and finalized blocks from prior controller calls,
+    /// but do not necessarily have to match any single 3-tuple.
+    ///
+    /// This admits some innocuous things like head blocks with old justification/finalization,
+    /// but also some weird stuff like justification==finalization, which Prysm v4.0.0 and lower
+    /// will sometimes send (see: https://github.com/prysmaticlabs/prysm/issues/12195).
+    Loose,
+    /// Client fcU must match the head block only: justification and finalization are ignored.
+    ///
+    /// This is the most dangerous and is not recommended.
+    HeadOnly,
+}
+
+impl ValueEnum for FcuMatching {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Exact, Self::Loose, Self::HeadOnly]
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        let s: &'static str = self.into();
+        let pv = match self {
+            FcuMatching::Exact => {
+                PossibleValue::new(s).help("match head/safe/finalized from controller exactly")
+            }
+            FcuMatching::Loose => {
+                PossibleValue::new(s).help("match head and sanity check safe/finalized")
+            }
+            FcuMatching::HeadOnly => {
+                PossibleValue::new(s).help("match head and ignore safe/finalized (dangerous)")
+            }
+        };
+        Some(pv)
     }
 }
