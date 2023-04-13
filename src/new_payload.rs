@@ -116,6 +116,7 @@ impl<E: EthSpec> Multiplexer<E> {
         })?;
 
         let fork_name = self.spec.fork_name_at_slot::<E>(slot);
+        tracing::info!(fork_name = %fork_name, "decoding new payload");
 
         // TODO: this could be more generic
         let payload = if method == ENGINE_NEW_PAYLOAD_V1 || fork_name == ForkName::Merge {
