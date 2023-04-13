@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-execution_layer = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-tree_hash = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-tree_hash_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-task_executor = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
+execution_layer = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+tree_hash = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+tree_hash_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+task_executor = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2_network_config = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2 = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
 ethereum_serde_utils = "0.5.0"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = "0.6.10"
@@ -29,14 +29,14 @@ strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 
 [patch]
 [patch.crates-io]
-eth2_ssz = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2_ssz_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2_ssz_types = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2_hashing = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-tree_hash = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-tree_hash_derive = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-eth2_serde_utils = { git = "https://github.com/michaelsproul/lighthouse", rev = "6b45a12d00c11b39f155a916bc457b80b3030527" }
-arbitrary = { git = "https://github.com/michaelsproul/arbitrary", rev="a572fd8743012a4f1ada5ee5968b1b3619c427ba" }
+eth2_ssz = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2_ssz_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2_ssz_types = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2_hashing = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+tree_hash = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+tree_hash_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+eth2_serde_utils = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
+arbitrary = { git = "https://github.com/michaelsproul/arbitrary", rev="f002b99989b561ddce62e4cf2887b0f8860ae991" }
 
 [patch."https://github.com/ralexstokes/mev-rs"]
 mev-rs = { git = "https://github.com/ralexstokes//mev-rs", rev = "7813d4a4a564e0754e9aaab2d95520ba437c3889" }
