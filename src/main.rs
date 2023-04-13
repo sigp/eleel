@@ -15,8 +15,10 @@ use clap::Parser;
 use eth2::types::MainnetEthSpec;
 use execution_layer::http::{
     ENGINE_EXCHANGE_CAPABILITIES, ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1,
-    ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2, ENGINE_GET_PAYLOAD_V1,
-    ENGINE_GET_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ETH_SYNCING,
+    ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2,
+    ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1, ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1,
+    ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2,
+    ETH_SYNCING,
 };
 use futures::channel::mpsc::channel;
 use slog::Logger;
@@ -116,9 +118,12 @@ async fn process_client_request(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
-        "eth_getBlockByNumber" | "eth_getBlockByHash" | "eth_getLogs" | "eth_call" => {
-            multiplexer.proxy_directly(request).await
-        }
+        "eth_getBlockByNumber"
+        | "eth_getBlockByHash"
+        | "eth_getLogs"
+        | "eth_call"
+        | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
+        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }
@@ -144,9 +149,12 @@ async fn handle_controller_json_rpc(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
-        "eth_getBlockByNumber" | "eth_getBlockByHash" | "eth_getLogs" | "eth_call" => {
-            multiplexer.proxy_directly(request).await
-        }
+        "eth_getBlockByNumber"
+        | "eth_getBlockByHash"
+        | "eth_getLogs"
+        | "eth_call"
+        | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
+        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
         method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
             Err(ErrorResponse::unsupported_method(request.id, method))
         }
