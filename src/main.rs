@@ -32,6 +32,7 @@ mod logging;
 mod meta;
 mod multiplexer;
 mod new_payload;
+mod payload_builder;
 mod transition_config;
 mod types;
 
