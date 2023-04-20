@@ -18,10 +18,9 @@ impl<E: EthSpec> Multiplexer<E> {
             request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
-        tracing::info!(head_hash = ?head_hash, payload_attributes = ?opt_payload_attributes, "processing fcU from controller");
+        tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
 
         let payload_status = if let Some(status) = self.get_cached_fcu(&fcu, true).await {
-            // If fcU is cached then there should also
             status
         } else {
             // Make a corresponding request to the EL.
@@ -93,6 +92,10 @@ impl<E: EthSpec> Multiplexer<E> {
         // the controller initiallysends the fcU without payload attributes, then sends it again
         // later *with* payload attributes.
         let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
+            tracing::info!(
+                head_hash = ?head_hash,
+                "processing payload attributes from controller"
+            );
             match self
                 .register_attributes(
                     head_hash,
@@ -124,17 +127,21 @@ impl<E: EthSpec> Multiplexer<E> {
 
         // Wait a short time for a definite response from the EL. Chances are it's busy processing
         // the fcU sent by the controlling BN.
+        let mut definite_payload_status = None;
         let start = Instant::now();
         while start.elapsed().as_millis() < self.config.fcu_wait_millis {
-            if let Some(response) = self.get_cached_fcu(&fcu, true).await {
+            if let Some(definite_status) = self.get_cached_fcu(&fcu, true).await {
                 tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
-                return Response::new(id, response);
+                definite_payload_status = Some(definite_status);
+                break;
             }
             tokio::time::sleep(Duration::from_millis(50)).await;
         }
 
         // Check cache, allowing for indefinite Syncing/Accepted responses.
-        let payload_status = if let Some(payload_status) = self.get_cached_fcu(&fcu, false).await {
+        let payload_status = if let Some(definite_status) = definite_payload_status {
+            definite_status
+        } else if let Some(payload_status) = self.get_cached_fcu(&fcu, false).await {
             if Self::is_definite(&payload_status) {
                 tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
             } else {
