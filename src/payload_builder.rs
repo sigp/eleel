@@ -1,4 +1,7 @@
-use crate::Multiplexer;
+use crate::{
+    types::{JsonExecutionPayload, JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId},
+    ErrorResponse, Multiplexer, Request, Response,
+};
 use eth2::types::{
     EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella, ExecutionPayloadMerge,
     ForkName, VariableList,
@@ -8,8 +11,6 @@ use lru::LruCache;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
-type PayloadId = u64;
-
 /// Information about previously seen canonical payloads which is used for building descendant payloads.
 #[derive(Debug, Clone, Copy)]
 pub struct PayloadInfo {
@@ -17,7 +18,7 @@ pub struct PayloadInfo {
 }
 
 pub struct PayloadBuilder<E: EthSpec> {
-    next_payload_id: PayloadId,
+    next_payload_id: u64,
     payload_attributes: LruCache<(ExecutionBlockHash, PayloadAttributes), PayloadId>,
     /// Map from block hash to information about canonical, non-dummy payloads.
     payload_info: LruCache<ExecutionBlockHash, PayloadInfo>,
@@ -64,7 +65,7 @@ impl<E: EthSpec> Multiplexer<E> {
         };
 
         // Allocate a payload ID.
-        let id = builder.next_payload_id;
+        let id = builder.next_payload_id.to_be_bytes();
 
         // Build.
         let block_number = parent_info.block_number + 1;
@@ -113,7 +114,61 @@ impl<E: EthSpec> Multiplexer<E> {
         Ok(id)
     }
 
-    pub fn get_payload(&mut self, payload_id: PayloadId) -> Result<ExecutionPayload<E>, String> {
-        todo!()
+    pub async fn get_existing_payload_id(
+        &self,
+        parent_hash: ExecutionBlockHash,
+        payload_attributes: PayloadAttributes,
+    ) -> Result<PayloadId, String> {
+        self.payload_builder
+            .lock()
+            .await
+            .payload_attributes
+            .get(&(parent_hash, payload_attributes))
+            .copied()
+            .ok_or_else(|| format!("no payload ID known for parent {parent_hash:?}"))
+    }
+
+    /// Track a payload from the canonical chain.
+    pub async fn register_canonical_payload(
+        &self,
+        payload: &ExecutionPayload<E>,
+        status: JsonPayloadStatusV1Status,
+    ) {
+        if status == JsonPayloadStatusV1Status::Invalid
+            || status == JsonPayloadStatusV1Status::InvalidBlockHash
+        {
+            return;
+        }
+
+        self.payload_builder
+            .lock()
+            .await
+            .payload_info
+            .get_or_insert(payload.block_hash(), || PayloadInfo {
+                block_number: payload.block_number(),
+            });
+    }
+
+    pub async fn get_payload(&self, payload_id: PayloadId) -> Result<ExecutionPayload<E>, String> {
+        self.payload_builder
+            .lock()
+            .await
+            .payloads
+            .get(&payload_id)
+            .cloned()
+            .ok_or_else(|| {
+                let payload_num = u64::from_be_bytes(payload_id);
+                format!("unknown payload ID: {payload_num}")
+            })
+    }
+
+    pub async fn handle_get_payload(&self, request: Request) -> Result<Response, ErrorResponse> {
+        let (id, (payload_id,)) = request.parse_as::<(TransparentJsonPayloadId,)>()?;
+        let payload = match self.get_payload(payload_id.into()).await {
+            Ok(payload) => payload,
+            Err(message) => return Err(ErrorResponse::unknown_payload(id, message)),
+        };
+        let json_payload = JsonExecutionPayload::from(payload);
+        Response::new(id, json_payload)
     }
 }

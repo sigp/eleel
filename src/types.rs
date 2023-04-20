@@ -7,12 +7,15 @@ pub use execution_layer::{
     auth::Auth,
     engines::Engine,
     json_structures::{
-        JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, TransitionConfigurationV1,
+        JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonPayloadAttributes,
+        JsonPayloadStatusV1, JsonPayloadStatusV1Status, TransitionConfigurationV1,
+        TransparentJsonPayloadId,
     },
 };
 pub use serde_json::Value as JsonValue;
 pub use task_executor::TaskExecutor;
+
+pub type PayloadId = [u8; 8];
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -181,6 +184,28 @@ impl ErrorResponse {
             id,
             error: JsonError {
                 code: ErrorCode::InvalidRequest,
+                message,
+            },
+        }
+    }
+
+    pub fn invalid_payload_attributes(id: JsonValue, message: String) -> Self {
+        Self {
+            jsonrpc: "2.0".into(),
+            id,
+            error: JsonError {
+                code: ErrorCode::InvalidPayloadAttributes,
+                message,
+            },
+        }
+    }
+
+    pub fn unknown_payload(id: JsonValue, message: String) -> Self {
+        Self {
+            jsonrpc: "2.0".into(),
+            id,
+            error: JsonError {
+                code: ErrorCode::UnknownPayload,
                 message,
             },
         }

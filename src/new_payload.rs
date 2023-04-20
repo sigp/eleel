@@ -6,7 +6,7 @@ use crate::{
         JsonValue, QuantityU64, Request, Response,
     },
 };
-use eth2::types::{EthSpec, ExecutionBlockHash, ForkName, Slot};
+use eth2::types::{EthSpec, ExecutionBlockHash, ExecutionPayload, ForkName, Slot};
 use execution_layer::http::ENGINE_NEW_PAYLOAD_V1;
 use std::time::{Duration, Instant};
 
@@ -16,16 +16,17 @@ impl<E: EthSpec> Multiplexer<E> {
         request: Request,
     ) -> Result<Response, ErrorResponse> {
         tracing::info!("processing payload from controller");
-        let (id, execution_payload) = self.decode_execution_payload(request)?;
+        let (id, json_execution_payload) = self.decode_execution_payload(request)?;
 
         // TODO: verify block hash
-        let block_hash = *execution_payload.block_hash();
+        let block_hash = *json_execution_payload.block_hash();
 
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
             status
         } else {
             // Send payload to the real EL.
-            match self.engine.api.new_payload(execution_payload.into()).await {
+            let execution_payload = ExecutionPayload::from(json_execution_payload);
+            match self.engine.api.new_payload(execution_payload.clone()).await {
                 Ok(status) => {
                     let json_status = JsonPayloadStatusV1::from(status);
 
@@ -34,6 +35,10 @@ impl<E: EthSpec> Multiplexer<E> {
                         .lock()
                         .await
                         .put(block_hash, json_status.clone());
+
+                    // Update payload builder.
+                    self.register_canonical_payload(&execution_payload, json_status.status)
+                        .await;
 
                     json_status
                 }

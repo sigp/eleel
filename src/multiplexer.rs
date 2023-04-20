@@ -4,10 +4,7 @@
 use crate::{
     config::Config,
     payload_builder::PayloadBuilder,
-    types::{
-        Auth, Engine, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
-        TaskExecutor,
-    },
+    types::{Auth, Engine, JsonForkchoiceStateV1, JsonPayloadStatusV1, TaskExecutor},
 };
 use eth2::types::{ChainSpec, EthSpec, ExecutionBlockHash};
 use execution_layer::HttpJsonRpc;
@@ -21,7 +18,7 @@ use tokio::sync::Mutex;
 
 pub struct Multiplexer<E: EthSpec> {
     pub engine: Engine,
-    pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response>>,
+    pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonPayloadStatusV1>>,
     pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, JsonPayloadStatusV1>>,
     pub justified_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
     pub finalized_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
