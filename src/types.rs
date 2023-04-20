@@ -7,7 +7,8 @@ pub use execution_layer::{
     auth::Auth,
     engines::Engine,
     json_structures::{
-        JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonPayloadAttributes,
+        JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonGetPayloadResponse,
+        JsonGetPayloadResponseV1, JsonGetPayloadResponseV2, JsonPayloadAttributes,
         JsonPayloadAttributesV2, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
         TransitionConfigurationV1, TransparentJsonPayloadId,
     },

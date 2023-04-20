@@ -1,10 +1,13 @@
 use crate::{
-    types::{JsonExecutionPayload, JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId},
+    types::{
+        JsonExecutionPayload, JsonGetPayloadResponseV1, JsonGetPayloadResponseV2,
+        JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId,
+    },
     ErrorResponse, Multiplexer, Request, Response,
 };
 use eth2::types::{
     EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella, ExecutionPayloadMerge,
-    ForkName, VariableList,
+    ForkName, Uint256, VariableList,
 };
 use execution_layer::PayloadAttributes;
 use lru::LruCache;
@@ -169,6 +172,23 @@ impl<E: EthSpec> Multiplexer<E> {
             Err(message) => return Err(ErrorResponse::unknown_payload(id, message)),
         };
         let json_payload = JsonExecutionPayload::from(payload);
-        Response::new(id, json_payload)
+        let block_value = Uint256::zero();
+        // Slightly awkward due to `JsonExecutionPayload` not implementing Serialize properly
+        match json_payload {
+            JsonExecutionPayload::V1(execution_payload) => Response::new(
+                id,
+                JsonGetPayloadResponseV1 {
+                    execution_payload,
+                    block_value,
+                },
+            ),
+            JsonExecutionPayload::V2(execution_payload) => Response::new(
+                id,
+                JsonGetPayloadResponseV2 {
+                    execution_payload,
+                    block_value,
+                },
+            ),
+        }
     }
 }
