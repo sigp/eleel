@@ -18,7 +18,7 @@ impl<E: EthSpec> Multiplexer<E> {
             request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
-        tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
+        tracing::info!(head_hash = ?head_hash, payload_attributes = ?opt_payload_attributes, "processing fcU from controller");
 
         let payload_status = if let Some(status) = self.get_cached_fcu(&fcu, true).await {
             // If fcU is cached then there should also
