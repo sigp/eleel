@@ -4,8 +4,8 @@ use crate::{
     multiplexer::Multiplexer,
     types::{
         ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response,
-        JsonPayloadAttributes, JsonPayloadStatusV1, JsonPayloadStatusV1Status, Request, Response,
-        TransparentJsonPayloadId,
+        JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
+        JsonPayloadStatusV1Status, Request, Response, TransparentJsonPayloadId,
     },
 };
 use eth2::types::EthSpec;
@@ -15,7 +15,7 @@ impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
         // FIXME: might need ForkVersionDeserialize for payload attributes
         let (id, (fcu, opt_payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributes>)>()?;
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
@@ -94,7 +94,10 @@ impl<E: EthSpec> Multiplexer<E> {
         // later *with* payload attributes.
         let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
             match self
-                .register_attributes(head_hash, payload_attributes.into())
+                .register_attributes(
+                    head_hash,
+                    JsonPayloadAttributes::V2(payload_attributes).into(),
+                )
                 .await
             {
                 Ok(id) => Some(TransparentJsonPayloadId(id)),
@@ -114,7 +117,7 @@ impl<E: EthSpec> Multiplexer<E> {
 
     pub async fn handle_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
         let (id, (fcu, opt_payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributes>)>()?;
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(id = ?id, head_hash = ?head_hash, "processing fcU from client");
@@ -151,7 +154,10 @@ impl<E: EthSpec> Multiplexer<E> {
         // FIXME: wait for payload attributes from controller?
         let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
             match self
-                .get_existing_payload_id(head_hash, payload_attributes.into())
+                .get_existing_payload_id(
+                    head_hash,
+                    JsonPayloadAttributes::V2(payload_attributes).into(),
+                )
                 .await
             {
                 Ok(payload_id) => Some(TransparentJsonPayloadId(payload_id)),

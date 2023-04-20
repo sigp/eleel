@@ -8,8 +8,8 @@ pub use execution_layer::{
     engines::Engine,
     json_structures::{
         JsonExecutionPayload, JsonForkchoiceUpdatedV1Response, JsonPayloadAttributes,
-        JsonPayloadStatusV1, JsonPayloadStatusV1Status, TransitionConfigurationV1,
-        TransparentJsonPayloadId,
+        JsonPayloadAttributesV2, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
+        TransitionConfigurationV1, TransparentJsonPayloadId,
     },
 };
 pub use serde_json::Value as JsonValue;
