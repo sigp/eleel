@@ -48,7 +48,7 @@ impl<E: EthSpec> Multiplexer<E> {
                     tracing::warn!(error = ?e, "error during newPayload");
                     return Err(ErrorResponse::invalid_request(
                         id,
-                        format!("payload verification failed: see eleel logs"),
+                        "payload verification failed: see eleel logs".to_string(),
                     ));
                 }
             }
@@ -68,15 +68,14 @@ impl<E: EthSpec> Multiplexer<E> {
         // the payload sent by the controlling BN.
         let start = Instant::now();
         while start.elapsed().as_millis() < self.config.new_payload_wait_millis {
-            if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
+            if let Some(status) = self.get_cached_payload_status(block_hash, true).await {
                 return Response::new(id, status);
             }
             tokio::time::sleep(Duration::from_millis(50)).await;
         }
 
         // Try again to get any status from the cache, or fall back on a SYNCING response.
-        let status = if let Some(status) = self.get_cached_payload_status(&block_hash, false).await
-        {
+        let status = if let Some(status) = self.get_cached_payload_status(block_hash, false).await {
             if !Self::is_definite(&status) {
                 tracing::info!("sending indefinite status on newPayload");
             }
@@ -108,8 +107,8 @@ impl<E: EthSpec> Multiplexer<E> {
                     .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?
             } else {
                 return Err(ErrorResponse::parse_error_generic(
-                    id.clone(),
-                    format!("timestamp string missing"),
+                    id,
+                    "timestamp value missing".to_string(),
                 ));
             };
 
@@ -146,8 +145,8 @@ impl<E: EthSpec> Multiplexer<E> {
         definite_only: bool,
     ) -> Option<JsonPayloadStatusV1> {
         let mut cache = self.new_payload_cache.lock().await;
-        if let Some(existing_status) = cache.get(&execution_block_hash) {
-            if !definite_only || Self::is_definite(&existing_status) {
+        if let Some(existing_status) = cache.get(execution_block_hash) {
+            if !definite_only || Self::is_definite(existing_status) {
                 return Some(existing_status.clone());
             }
         }

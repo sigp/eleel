@@ -47,26 +47,23 @@ impl<E: EthSpec> Multiplexer<E> {
             let api = HttpJsonRpc::new_with_auth(url, auth, execution_timeout_multiplier)
                 .map_err(|e| format!("Error connecting to EL: {e:?}"))?;
 
-            Engine::new(api, executor.clone(), &log)
+            Engine::new(api, executor, &log)
         };
 
         let fcu_cache = Mutex::new(LruCache::new(
-            NonZeroUsize::new(config.fcu_cache_size).ok_or_else(|| "invalid cache size")?,
+            NonZeroUsize::new(config.fcu_cache_size).ok_or("invalid cache size")?,
         ));
         let new_payload_cache = Mutex::new(LruCache::new(
-            NonZeroUsize::new(config.new_payload_cache_size).ok_or_else(|| "invalid cache size")?,
+            NonZeroUsize::new(config.new_payload_cache_size).ok_or("invalid cache size")?,
         ));
         let justified_block_cache = Mutex::new(LruCache::new(
-            NonZeroUsize::new(config.justified_block_cache_size)
-                .ok_or_else(|| "invalid cache size")?,
+            NonZeroUsize::new(config.justified_block_cache_size).ok_or("invalid cache size")?,
         ));
         let finalized_block_cache = Mutex::new(LruCache::new(
-            NonZeroUsize::new(config.justified_block_cache_size)
-                .ok_or_else(|| "invalid cache size")?,
+            NonZeroUsize::new(config.justified_block_cache_size).ok_or("invalid cache size")?,
         ));
         let payload_builder = Mutex::new(PayloadBuilder::new(
-            NonZeroUsize::new(config.payload_builder_cache_size)
-                .ok_or_else(|| "invalid cache size")?,
+            NonZeroUsize::new(config.payload_builder_cache_size).ok_or("invalid cache size")?,
         ));
 
         // Derived values.
