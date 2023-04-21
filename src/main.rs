@@ -8,8 +8,9 @@ use crate::{
 };
 use axum::{
     extract::{rejection::JsonRejection, DefaultBodyLimit, State},
-    routing::post,
-    Json, Router,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router, http::StatusCode,
 };
 use clap::Parser;
 use eth2::types::MainnetEthSpec;
@@ -56,6 +57,7 @@ async fn main() {
     let app = Router::new()
         .route("/", post(handle_client_json_rpc))
         .route("/canonical", post(handle_controller_json_rpc))
+        .route("/health", get(handle_health))
         .with_state(multiplexer)
         .layer(DefaultBodyLimit::max(body_limit_mb * MEGABYTE));
 
@@ -163,4 +165,8 @@ async fn handle_controller_json_rpc(
     }
     .map(|response| Json(response))
     .map_err(|err| Json(err))
+}
+
+async fn handle_health() -> impl IntoResponse {
+    StatusCode::OK
 }
