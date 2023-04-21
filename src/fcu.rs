@@ -37,7 +37,7 @@ impl<E: EthSpec> Multiplexer<E> {
                     let mut cache = self.fcu_cache.lock().await;
 
                     let cached = if let Some(existing_status) = cache.get_mut(&fcu) {
-                        if Self::is_definite(&existing_status) {
+                        if Self::is_definite(existing_status) {
                             tracing::debug!(
                                 head_hash = ?head_hash,
                                 "ignoring redundant fcU cache update"
@@ -79,7 +79,7 @@ impl<E: EthSpec> Multiplexer<E> {
                     tracing::warn!(error = ?e, "error during fcU");
                     return Err(ErrorResponse::invalid_request(
                         id,
-                        format!("forkchoice update failed: see eleel logs"),
+                        "forkchoice update failed: see eleel logs".into(),
                     ));
                 }
             }
@@ -218,7 +218,7 @@ impl<E: EthSpec> Multiplexer<E> {
             }
         };
 
-        let definite_enough = !definite_only || Self::is_definite(&existing_status);
+        let definite_enough = !definite_only || Self::is_definite(existing_status);
 
         if just_and_fin_ok && definite_enough {
             Some(existing_status.clone())

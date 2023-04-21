@@ -163,8 +163,8 @@ async fn handle_controller_json_rpc(
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }
-    .map(|response| Json(response))
-    .map_err(|err| Json(err))
+    .map(Json)
+    .map_err(Json)
 }
 
 async fn handle_health() -> impl IntoResponse {
