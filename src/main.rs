@@ -32,6 +32,7 @@ mod logging;
 mod meta;
 mod multiplexer;
 mod new_payload;
+mod payload_builder;
 mod transition_config;
 mod types;
 
@@ -124,8 +125,8 @@ async fn process_client_request(
         | "eth_call"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
-        method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
-            Err(ErrorResponse::unsupported_method(request.id, method))
+        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
+            multiplexer.handle_get_payload(request).await
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }
@@ -155,8 +156,8 @@ async fn handle_controller_json_rpc(
         | "eth_call"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
-        method @ ENGINE_GET_PAYLOAD_V1 | method @ ENGINE_GET_PAYLOAD_V2 => {
-            Err(ErrorResponse::unsupported_method(request.id, method))
+        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
+            multiplexer.handle_get_payload(request).await
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }

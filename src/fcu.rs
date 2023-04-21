@@ -3,8 +3,9 @@ use crate::{
     config::FcuMatching,
     multiplexer::Multiplexer,
     types::{
-        ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, JsonValue, Request, Response,
+        ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response,
+        JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
+        JsonPayloadStatusV1Status, Request, Response, TransparentJsonPayloadId,
     },
 };
 use eth2::types::EthSpec;
@@ -12,17 +13,18 @@ use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
-        let (id, (fcu, _payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, JsonValue)>()?;
+        // FIXME: might need ForkVersionDeserialize for payload attributes
+        let (id, (fcu, opt_payload_attributes)) =
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
 
-        let response = if let Some(response) = self.get_cached_fcu(&fcu, true).await {
-            response
+        let payload_status = if let Some(status) = self.get_cached_fcu(&fcu, true).await {
+            status
         } else {
             // Make a corresponding request to the EL.
-            // Never send payload attributes.
+            // Do not send payload attributes to the EL (for now).
             match self
                 .engine
                 .notify_forkchoice_updated(fcu.clone().into(), None, &self.log)
@@ -34,40 +36,43 @@ impl<E: EthSpec> Multiplexer<E> {
 
                     let mut cache = self.fcu_cache.lock().await;
 
-                    let cached = if let Some(existing_entry) = cache.get_mut(&fcu) {
-                        if Self::is_definite(&existing_entry.payload_status) {
+                    let cached = if let Some(existing_status) = cache.get_mut(&fcu) {
+                        if Self::is_definite(&existing_status) {
                             tracing::debug!(
                                 head_hash = ?head_hash,
                                 "ignoring redundant fcU cache update"
                             );
                             false
                         } else {
-                            *existing_entry = json_response.clone();
+                            *existing_status = json_response.payload_status.clone();
                             true
                         }
                     } else {
-                        cache.put(fcu.clone(), json_response.clone());
+                        cache.put(fcu.clone(), json_response.payload_status.clone());
                         true
                     };
                     drop(cache);
 
                     if cached {
-                        self.justified_block_cache
-                            .lock()
-                            .await
-                            .put(fcu.safe_block_hash, ());
-                        self.finalized_block_cache
-                            .lock()
-                            .await
-                            .put(fcu.finalized_block_hash, ());
                         tracing::info!(
                             head_hash = ?head_hash,
                             status = ?status,
                             "cached fcU from controller"
                         );
+
+                        if status == JsonPayloadStatusV1Status::Valid {
+                            self.justified_block_cache
+                                .lock()
+                                .await
+                                .put(fcu.safe_block_hash, ());
+                            self.finalized_block_cache
+                                .lock()
+                                .await
+                                .put(fcu.finalized_block_hash, ());
+                        }
                     }
 
-                    json_response
+                    json_response.payload_status
                 }
                 Err(e) => {
                     // Return an error to the controlling CL.
@@ -80,47 +85,103 @@ impl<E: EthSpec> Multiplexer<E> {
             }
         };
 
+        // FIXME: don't build payload if status is SYNCING/INVALID
+
+        // If the controller sent payload attributes, then register them with the dummy payload
+        // builder *even if* the fcU status itself was already cached. This covers the case where
+        // the controller initiallysends the fcU without payload attributes, then sends it again
+        // later *with* payload attributes.
+        let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
+            tracing::info!(
+                head_hash = ?head_hash,
+                "processing payload attributes from controller"
+            );
+            match self
+                .register_attributes(
+                    head_hash,
+                    JsonPayloadAttributes::V2(payload_attributes).into(),
+                )
+                .await
+            {
+                Ok(id) => Some(TransparentJsonPayloadId(id)),
+                Err(message) => return Err(ErrorResponse::invalid_payload_attributes(id, message)),
+            }
+        } else {
+            None
+        };
+
+        let response = JsonForkchoiceUpdatedV1Response {
+            payload_status,
+            payload_id,
+        };
+
         Response::new(id, response)
     }
 
     pub async fn handle_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
-        let (id, (fcu, _payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, JsonValue)>()?;
+        let (id, (fcu, opt_payload_attributes)) =
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(id = ?id, head_hash = ?head_hash, "processing fcU from client");
 
         // Wait a short time for a definite response from the EL. Chances are it's busy processing
         // the fcU sent by the controlling BN.
+        let mut definite_payload_status = None;
         let start = Instant::now();
         while start.elapsed().as_millis() < self.config.fcu_wait_millis {
-            if let Some(response) = self.get_cached_fcu(&fcu, true).await {
+            if let Some(definite_status) = self.get_cached_fcu(&fcu, true).await {
                 tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
-                return Response::new(id, response);
+                definite_payload_status = Some(definite_status);
+                break;
             }
             tokio::time::sleep(Duration::from_millis(50)).await;
         }
 
         // Check cache, allowing for indefinite Syncing/Accepted responses.
-        let response = if let Some(response) = self.get_cached_fcu(&fcu, false).await {
-            if Self::is_definite(&response.payload_status) {
+        let payload_status = if let Some(definite_status) = definite_payload_status {
+            definite_status
+        } else if let Some(payload_status) = self.get_cached_fcu(&fcu, false).await {
+            if Self::is_definite(&payload_status) {
                 tracing::debug!(id = ?id, head_hash = ?head_hash, "found definite fcU in cache");
             } else {
                 tracing::info!("sending cached indefinite status on fcU");
             }
-            response
+            payload_status
         } else {
             // Synthesise a syncing response to send, but do not cache it.
             tracing::info!(id = ?id, head_hash = ?head_hash, "sending SYNCING status on fcU");
-            JsonForkchoiceUpdatedV1Response {
-                payload_status: JsonPayloadStatusV1 {
-                    status: JsonPayloadStatusV1Status::Syncing,
-                    latest_valid_hash: None,
-                    validation_error: None,
-                },
-                payload_id: None,
+            JsonPayloadStatusV1 {
+                status: JsonPayloadStatusV1Status::Syncing,
+                latest_valid_hash: None,
+                validation_error: None,
             }
         };
+
+        // FIXME: wait for payload attributes from controller?
+        let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
+            match self
+                .get_existing_payload_id(
+                    head_hash,
+                    JsonPayloadAttributes::V2(payload_attributes).into(),
+                )
+                .await
+            {
+                Ok(payload_id) => Some(TransparentJsonPayloadId(payload_id)),
+                Err(message) => {
+                    tracing::warn!(message, "unable to build payload for client");
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        let response = JsonForkchoiceUpdatedV1Response {
+            payload_status,
+            payload_id,
+        };
+
         Response::new(id, response)
     }
 
@@ -131,10 +192,10 @@ impl<E: EthSpec> Multiplexer<E> {
         &self,
         fcu: &JsonForkchoiceStateV1,
         definite_only: bool,
-    ) -> Option<JsonForkchoiceUpdatedV1Response> {
+    ) -> Option<JsonPayloadStatusV1> {
         let mut cache = self.fcu_cache.lock().await;
 
-        let existing_response = match self.config.fcu_matching {
+        let existing_status = match self.config.fcu_matching {
             FcuMatching::Exact => cache.get(fcu),
             FcuMatching::Loose | FcuMatching::HeadOnly => {
                 cache.iter().find_map(|(cached_fcu, res)| {
@@ -157,11 +218,10 @@ impl<E: EthSpec> Multiplexer<E> {
             }
         };
 
-        let definite_enough =
-            !definite_only || Self::is_definite(&existing_response.payload_status);
+        let definite_enough = !definite_only || Self::is_definite(&existing_status);
 
         if just_and_fin_ok && definite_enough {
-            Some(existing_response.clone())
+            Some(existing_status.clone())
         } else {
             None
         }

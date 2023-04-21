@@ -3,10 +3,8 @@
 //! We may cache more here in future (e.g. payload bodies for reconstruction).
 use crate::{
     config::Config,
-    types::{
-        Auth, Engine, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response, JsonPayloadStatusV1,
-        TaskExecutor,
-    },
+    payload_builder::PayloadBuilder,
+    types::{Auth, Engine, JsonForkchoiceStateV1, JsonPayloadStatusV1, TaskExecutor},
 };
 use eth2::types::{ChainSpec, EthSpec, ExecutionBlockHash};
 use execution_layer::HttpJsonRpc;
@@ -20,10 +18,11 @@ use tokio::sync::Mutex;
 
 pub struct Multiplexer<E: EthSpec> {
     pub engine: Engine,
-    pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response>>,
+    pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonPayloadStatusV1>>,
     pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, JsonPayloadStatusV1>>,
     pub justified_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
     pub finalized_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
+    pub payload_builder: Mutex<PayloadBuilder<E>>,
     pub genesis_time: u64,
     pub spec: ChainSpec,
     pub config: Config,
@@ -65,6 +64,10 @@ impl<E: EthSpec> Multiplexer<E> {
             NonZeroUsize::new(config.justified_block_cache_size)
                 .ok_or_else(|| "invalid cache size")?,
         ));
+        let payload_builder = Mutex::new(PayloadBuilder::new(
+            NonZeroUsize::new(config.payload_builder_cache_size)
+                .ok_or_else(|| "invalid cache size")?,
+        ));
 
         // Derived values.
         let spec = config.network.network.chain_spec::<E>()?;
@@ -77,6 +80,7 @@ impl<E: EthSpec> Multiplexer<E> {
             new_payload_cache,
             justified_block_cache,
             finalized_block_cache,
+            payload_builder,
             genesis_time,
             spec,
             config,

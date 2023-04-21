@@ -18,6 +18,9 @@ pub struct Config {
     /// Number of recent forkchoiceUpdated messages to cache in memory.
     #[arg(long, value_name = "N", default_value = "64")]
     pub fcu_cache_size: usize,
+    /// Number of payload attributes and past payloads to cache in memory.
+    #[arg(long, value_name = "N", default_value = "8")]
+    pub payload_builder_cache_size: usize,
     /// Number of justified block hashes to cache in memory.
     #[arg(long, value_name = "N", default_value = "4")]
     pub justified_block_cache_size: usize,
