@@ -8,9 +8,10 @@ use crate::{
 };
 use axum::{
     extract::{rejection::JsonRejection, DefaultBodyLimit, State},
+    http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router, http::StatusCode,
+    Json, Router,
 };
 use clap::Parser;
 use eth2::types::MainnetEthSpec;
