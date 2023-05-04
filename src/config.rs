@@ -8,7 +8,7 @@ use strum::{EnumString, IntoStaticStr};
 #[command(about = "Ethereum execution engine multiplexer")]
 pub struct Config {
     /// Listening address for the HTTP server.
-    #[arg(long, value_name = "IP", default_value = "0.0.0.0")]
+    #[arg(long, value_name = "IP", default_value = "127.0.0.1")]
     pub listen_address: IpAddr,
     /// Listening port for the HTTP server.
     #[arg(long, value_name = "PORT", default_value = "8552")]
