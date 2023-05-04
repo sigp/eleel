@@ -8,9 +8,10 @@ use crate::{
 };
 use axum::{
     extract::{rejection::JsonRejection, DefaultBodyLimit, State},
+    http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router, http::StatusCode,
+    Json, Router,
 };
 use clap::Parser;
 use eth2::types::MainnetEthSpec;
@@ -52,6 +53,8 @@ async fn main() {
     let config = Config::parse();
 
     let body_limit_mb = config.body_limit_mb;
+    let listen_address = config.listen_address;
+    let listen_port = config.listen_port;
     let multiplexer = Arc::new(Multiplexer::<E>::new(config, executor, log).unwrap());
 
     let app = Router::new()
@@ -61,7 +64,7 @@ async fn main() {
         .with_state(multiplexer)
         .layer(DefaultBodyLimit::max(body_limit_mb * MEGABYTE));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8552));
+    let addr = SocketAddr::from((listen_address, listen_port));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

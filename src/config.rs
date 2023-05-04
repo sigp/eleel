@@ -1,11 +1,18 @@
 use clap::{builder::PossibleValue, Parser, ValueEnum};
 use eth2_network_config::Eth2NetworkConfig;
+use std::net::IpAddr;
 use std::str::FromStr;
 use strum::{EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Parser)]
 #[command(about = "Ethereum execution engine multiplexer")]
 pub struct Config {
+    /// Listening address for the HTTP server.
+    #[arg(long, value_name = "IP", default_value = "127.0.0.1")]
+    pub listen_address: IpAddr,
+    /// Listening port for the HTTP server.
+    #[arg(long, value_name = "PORT", default_value = "8552")]
+    pub listen_port: u16,
     /// Primary execution engine to be shared by connected consensus nodes.
     #[arg(long, value_name = "URL", default_value = "http://localhost:8551")]
     pub ee_url: String,
