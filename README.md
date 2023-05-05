@@ -16,3 +16,9 @@ Rust to take advantage of the stronger type-system and to reuse components from
 
 [openexecution]: https://github.com/TennisBowling/openexecution
 [Lighthouse]: https://github.com/sigp/lighthouse
+
+## License
+
+Copyright Sigma Prime 2023 and contributors.
+
+Licensed under the terms of the Apache 2.0 license.
