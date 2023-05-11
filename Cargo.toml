@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-execution_layer = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-tree_hash = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-tree_hash_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-task_executor = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2_network_config = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2 = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-ethereum_serde_utils = "0.5.0"
+execution_layer = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+tree_hash = "0.5.1"
+tree_hash_derive = "0.5.1"
+task_executor = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+eth2_network_config = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+eth2 = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+ethereum_serde_utils = "0.5.1"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = "0.6.10"
 lru = "0.10.0"
@@ -29,13 +29,6 @@ strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 
 [patch]
 [patch.crates-io]
-eth2_ssz = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2_ssz_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2_ssz_types = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2_hashing = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-tree_hash = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-tree_hash_derive = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
-eth2_serde_utils = { git = "https://github.com/sigp/lighthouse", tag = "v4.0.1" }
 arbitrary = { git = "https://github.com/michaelsproul/arbitrary", rev="f002b99989b561ddce62e4cf2887b0f8860ae991" }
 
 [patch."https://github.com/ralexstokes/mev-rs"]
