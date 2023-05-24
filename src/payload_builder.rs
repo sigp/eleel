@@ -1,4 +1,5 @@
 use crate::{
+    base_fee::expected_base_fee_per_gas,
     types::{
         JsonExecutionPayload, JsonGetPayloadResponseV1, JsonGetPayloadResponseV2,
         JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId,
@@ -7,9 +8,9 @@ use crate::{
 };
 use eth2::types::{
     EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella, ExecutionPayloadMerge,
-    ForkName, Uint256, VariableList,
+    FixedVector, ForkName, Hash256, Uint256, Unsigned, VariableList,
 };
-use execution_layer::PayloadAttributes;
+use execution_layer::{ExecutionLayer, PayloadAttributes};
 use lru::LruCache;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
@@ -17,7 +18,17 @@ use std::num::NonZeroUsize;
 /// Information about previously seen canonical payloads which is used for building descendant payloads.
 #[derive(Debug, Clone, Copy)]
 pub struct PayloadInfo {
+    /// Execution block number.
     pub block_number: u64,
+    /// Execution state root.
+    ///
+    /// We use this as the state root of the block built upon this block. With 0 transactions, the
+    /// state root does not change!
+    pub state_root: Hash256,
+    /// For EIP-1559 calculations.
+    pub base_fee_per_gas: Uint256,
+    pub gas_used: u64,
+    pub gas_limit: u64,
 }
 
 pub struct PayloadBuilder<E: EthSpec> {
@@ -27,16 +38,22 @@ pub struct PayloadBuilder<E: EthSpec> {
     payload_info: LruCache<ExecutionBlockHash, PayloadInfo>,
     /// Map from payload ID to dummy execution payload.
     payloads: LruCache<PayloadId, ExecutionPayload<E>>,
+    extra_data: VariableList<u8, E::MaxExtraDataBytes>,
     _phantom: PhantomData<E>,
 }
 
 impl<E: EthSpec> PayloadBuilder<E> {
-    pub fn new(cache_size: NonZeroUsize) -> Self {
+    pub fn new(cache_size: NonZeroUsize, extra_data_str: &str) -> Self {
+        let extra_data_bytes = extra_data_str.as_bytes();
+        let len = std::cmp::min(extra_data_bytes.len(), E::MaxExtraDataBytes::to_usize());
+        let extra_data = VariableList::new(extra_data_bytes[..len].to_vec()).unwrap();
+
         Self {
             next_payload_id: 0,
             payload_attributes: LruCache::new(cache_size),
             payload_info: LruCache::new(cache_size),
             payloads: LruCache::new(cache_size),
+            extra_data,
             _phantom: PhantomData,
         }
     }
@@ -77,17 +94,34 @@ impl<E: EthSpec> Multiplexer<E> {
         let gas_limit = 30_000_000;
         let fork_name = self.spec.fork_name_at_slot::<E>(slot);
         let transactions = VariableList::new(vec![]).unwrap();
+        let state_root = parent_info.state_root;
+        let receipts_root = keccak_hash::KECCAK_EMPTY_LIST_RLP.as_fixed_bytes().into();
+        let logs_bloom = FixedVector::default();
+        let gas_used = 0;
+        let extra_data = builder.extra_data.clone();
+        let base_fee_per_gas = expected_base_fee_per_gas(
+            parent_info.base_fee_per_gas,
+            parent_info.gas_used,
+            parent_info.gas_limit,
+        );
+        let block_hash = ExecutionBlockHash::zero();
 
-        let payload = match fork_name {
+        let mut payload = match fork_name {
             ForkName::Merge => ExecutionPayload::Merge(ExecutionPayloadMerge {
                 parent_hash,
-                timestamp,
                 fee_recipient,
+                state_root,
+                receipts_root,
+                logs_bloom,
                 prev_randao,
                 block_number,
                 gas_limit,
+                gas_used,
+                timestamp,
+                extra_data,
+                base_fee_per_gas,
+                block_hash,
                 transactions,
-                ..Default::default()
             }),
             ForkName::Capella => {
                 let withdrawals = payload_attributes
@@ -97,18 +131,27 @@ impl<E: EthSpec> Multiplexer<E> {
                     .into();
                 ExecutionPayload::Capella(ExecutionPayloadCapella {
                     parent_hash,
-                    timestamp,
                     fee_recipient,
+                    state_root,
+                    receipts_root,
+                    logs_bloom,
                     prev_randao,
                     block_number,
                     gas_limit,
+                    gas_used,
+                    timestamp,
+                    extra_data,
+                    base_fee_per_gas,
+                    block_hash,
                     transactions,
                     withdrawals,
-                    ..Default::default()
                 })
             }
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
+
+        let (block_hash, _) = ExecutionLayer::<E>::calculate_execution_block_hash(payload.to_ref());
+        *payload.block_hash_mut() = block_hash;
 
         builder.payload_attributes.put(attributes_key, id);
         builder.payloads.put(id, payload);
@@ -149,6 +192,10 @@ impl<E: EthSpec> Multiplexer<E> {
             .payload_info
             .get_or_insert(payload.block_hash(), || PayloadInfo {
                 block_number: payload.block_number(),
+                state_root: payload.state_root(),
+                base_fee_per_gas: payload.base_fee_per_gas(),
+                gas_used: payload.gas_used(),
+                gas_limit: payload.gas_limit(),
             });
     }
 

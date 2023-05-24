@@ -64,6 +64,7 @@ impl<E: EthSpec> Multiplexer<E> {
         ));
         let payload_builder = Mutex::new(PayloadBuilder::new(
             NonZeroUsize::new(config.payload_builder_cache_size).ok_or("invalid cache size")?,
+            &config.payload_builder_extra_data,
         ));
 
         // Derived values.

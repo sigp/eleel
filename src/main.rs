@@ -28,6 +28,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::runtime::Handle;
 
+mod base_fee;
 mod config;
 mod fcu;
 mod logging;
