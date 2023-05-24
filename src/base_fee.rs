@@ -7,6 +7,7 @@ use std::cmp::max;
 const ELASTICITY_MULTIPLIER: u64 = 2;
 const BASE_FEE_MAX_CHANGE_DENOMINATOR: u64 = 8;
 
+#[allow(clippy::comparison_chain)]
 pub fn expected_base_fee_per_gas(
     parent_base_fee_per_gas: Uint256,
     parent_gas_used: u64,

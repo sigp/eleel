@@ -152,7 +152,7 @@ impl<E: EthSpec> Multiplexer<E> {
             // Synthesise a syncing response to send, but do not cache it.
             tracing::info!(id = ?id, head_hash = ?head_hash, "sending SYNCING status on fcU");
             JsonPayloadStatusV1 {
-                status: JsonPayloadStatusV1Status::Valid,
+                status: JsonPayloadStatusV1Status::Syncing,
                 latest_valid_hash: None,
                 validation_error: None,
             }
