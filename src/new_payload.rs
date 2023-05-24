@@ -84,7 +84,7 @@ impl<E: EthSpec> Multiplexer<E> {
             tracing::info!("sending SYNCING response on newPayload");
             // Synthetic syncing response.
             JsonPayloadStatusV1 {
-                status: JsonPayloadStatusV1Status::Syncing,
+                status: JsonPayloadStatusV1Status::Valid,
                 latest_valid_hash: None,
                 validation_error: None,
             }

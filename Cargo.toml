@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-execution_layer = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+execution_layer = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
 tree_hash = "0.5.1"
 tree_hash_derive = "0.5.1"
-task_executor = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
-eth2_network_config = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
-eth2 = { git = "https://github.com/sigp/lighthouse", rev = "60d13c3fea558e0f1935466375d976defa175114" }
+task_executor = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
+eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
+eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
 ethereum_serde_utils = "0.5.1"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = "0.6.10"
@@ -26,6 +26,7 @@ tracing-slog = "0.2.0"
 slog = "2.7.0"
 clap = { version = "4.0.0", features = ["derive"] }
 strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
+keccak-hash = "0.10.0"
 
 [patch]
 [patch.crates-io]

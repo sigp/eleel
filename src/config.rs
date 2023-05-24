@@ -28,6 +28,9 @@ pub struct Config {
     /// Number of payload attributes and past payloads to cache in memory.
     #[arg(long, value_name = "N", default_value = "8")]
     pub payload_builder_cache_size: usize,
+    /// Extra data to include in produced blocks.
+    #[arg(long, value_name = "STRING", default_value = "Eleel")]
+    pub payload_builder_extra_data: String,
     /// Number of justified block hashes to cache in memory.
     #[arg(long, value_name = "N", default_value = "4")]
     pub justified_block_cache_size: usize,
