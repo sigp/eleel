@@ -129,6 +129,7 @@ async fn process_client_request(
         | "eth_getBlockByHash"
         | "eth_getLogs"
         | "eth_call"
+        | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
         ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
@@ -160,6 +161,7 @@ async fn handle_controller_json_rpc(
         | "eth_getBlockByHash"
         | "eth_getLogs"
         | "eth_call"
+        | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
         ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
