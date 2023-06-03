@@ -22,8 +22,9 @@ pub struct PayloadInfo {
     pub block_number: u64,
     /// Execution state root.
     ///
-    /// We use this as the state root of the block built upon this block. With 0 transactions, the
-    /// state root does not change!
+    /// We use this as the state root of the block built upon this block. For Bellatrix this allows
+    /// us to build valid blocks, but post-Capella this doesn't work because the withdrawals
+    /// affect the state root and we can't compute that change without an EL.
     pub state_root: Hash256,
     /// For EIP-1559 calculations.
     pub base_fee_per_gas: Uint256,
