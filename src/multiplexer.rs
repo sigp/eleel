@@ -19,7 +19,7 @@ use tokio::sync::Mutex;
 pub struct Multiplexer<E: EthSpec> {
     pub engine: Engine,
     pub fcu_cache: Mutex<LruCache<JsonForkchoiceStateV1, JsonPayloadStatusV1>>,
-    pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, JsonPayloadStatusV1>>,
+    pub new_payload_cache: Mutex<LruCache<ExecutionBlockHash, NewPayloadCacheEntry>>,
     pub justified_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
     pub finalized_block_cache: Mutex<LruCache<ExecutionBlockHash, ()>>,
     pub payload_builder: Mutex<PayloadBuilder<E>>,
@@ -28,6 +28,11 @@ pub struct Multiplexer<E: EthSpec> {
     pub config: Config,
     pub log: Logger,
     _phantom: PhantomData<E>,
+}
+
+pub struct NewPayloadCacheEntry {
+    pub status: JsonPayloadStatusV1,
+    pub block_number: u64,
 }
 
 impl<E: EthSpec> Multiplexer<E> {
