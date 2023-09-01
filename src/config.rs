@@ -53,6 +53,12 @@ pub struct Config {
     /// the behaviour of a full execution engine.
     #[arg(long, value_name = "MILLIS", default_value = "2000")]
     pub new_payload_wait_millis: u128,
+    /// Maximum age of a payload that will trigger a wait on `newPayload`
+    ///
+    /// Payloads older than this age receive an instant SYNCING response. See docs for
+    /// `--new-payload-wait-millis` for the purpose of this wait.
+    #[arg(long, value_name = "NUM_BLOCKS", default_value = "64")]
+    pub new_payload_wait_cutoff: u64,
     /// Maximum time that a consensus node should wait for a forkchoiceUpdated response from the
     /// cache.
     ///
