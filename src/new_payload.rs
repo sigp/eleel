@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use eth2::types::{EthSpec, ExecutionBlockHash, ExecutionPayload, ForkName, Slot};
-use execution_layer::http::ENGINE_NEW_PAYLOAD_V1;
+use execution_layer::{http::ENGINE_NEW_PAYLOAD_V1, ExecutionLayer};
 use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
@@ -18,7 +18,6 @@ impl<E: EthSpec> Multiplexer<E> {
         tracing::info!("processing payload from controller");
         let (id, json_execution_payload) = self.decode_execution_payload(request)?;
 
-        // TODO: verify block hash
         let block_hash = *json_execution_payload.block_hash();
         let block_number = *json_execution_payload.block_number();
 
@@ -65,8 +64,7 @@ impl<E: EthSpec> Multiplexer<E> {
         tracing::info!("processing new payload from client");
         let (id, execution_payload) = self.decode_execution_payload(request)?;
 
-        // TODO: verify block hash
-        let block_hash = execution_payload.block_hash();
+        let block_hash = *execution_payload.block_hash();
         let block_number = *execution_payload.block_number();
 
         // If this is a *recent* payload, wait a short time for a definite response from the EL.
@@ -75,7 +73,7 @@ impl<E: EthSpec> Multiplexer<E> {
         if is_recent {
             let start = Instant::now();
             while start.elapsed().as_millis() < self.config.new_payload_wait_millis {
-                if let Some(status) = self.get_cached_payload_status(block_hash, true).await {
+                if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
                     return Response::new(id, status);
                 }
                 tokio::time::sleep(Duration::from_millis(50)).await;
@@ -83,12 +81,29 @@ impl<E: EthSpec> Multiplexer<E> {
         }
 
         // Try again to get any status from the cache, or fall back on a SYNCING response.
-        let status = if let Some(status) = self.get_cached_payload_status(block_hash, false).await {
+        let status = if let Some(status) = self.get_cached_payload_status(&block_hash, false).await
+        {
             if !Self::is_definite(&status) {
                 tracing::info!("sending indefinite status on newPayload");
             }
             status
         } else {
+            // Before sending a synthetic SYNCING response, check the block hash.
+            let execution_payload = ExecutionPayload::from(execution_payload);
+            let (calculated_block_hash, _) =
+                ExecutionLayer::<E>::calculate_execution_block_hash(execution_payload.to_ref());
+
+            if calculated_block_hash != block_hash {
+                tracing::warn!(
+                    expected = ?block_hash,
+                    computed = ?calculated_block_hash,
+                    "mismatched block hash"
+                );
+                return Err(ErrorResponse::invalid_request(
+                    id,
+                    format!("mismatched block hash {calculated_block_hash:?} vs {block_hash:?}"),
+                ));
+            }
             if is_recent {
                 tracing::info!("sending SYNCING response on recent newPayload");
             } else {
