@@ -124,13 +124,13 @@ async fn handle_client_json_rpc(
 
     match requests {
         Requests::Single(request) => Json(Responses::Single(
-            process_client_request(&multiplexer, request).await.into(),
+            process_client_request(multiplexer, request).await.into(),
         )),
         Requests::Multiple(requests) => {
             let mut results = vec![];
 
             for request in requests {
-                results.push(process_client_request(&multiplexer, request).await.into());
+                results.push(process_client_request(multiplexer, request).await.into());
             }
 
             Json(Responses::Multiple(results))

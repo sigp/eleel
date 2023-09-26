@@ -61,7 +61,7 @@ impl KeyCollection {
         }
 
         // No matching key found.
-        Err(format!("No matching JWT secret found"))
+        Err("No matching JWT secret found".into())
     }
 
     pub fn load(path: &Path) -> Result<Self, String> {
