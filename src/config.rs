@@ -1,6 +1,9 @@
 use clap::{builder::PossibleValue, Parser, ValueEnum};
 use eth2_network_config::Eth2NetworkConfig;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::IpAddr;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use strum::{EnumString, IntoStaticStr};
 
@@ -19,6 +22,11 @@ pub struct Config {
     /// Path to the JWT secret for the primary execution engine.
     #[arg(long, value_name = "PATH")]
     pub ee_jwt_secret: String,
+    /// Path to TOML file JWT secrets for the non-canonical CL clients.
+    ///
+    /// See docs for TOML file format.
+    #[arg(long, value_name = "PATH")]
+    pub client_jwt_secrets: PathBuf,
     /// Number of recent newPayload messages to cache in memory.
     #[arg(long, value_name = "N", default_value = "64")]
     pub new_payload_cache_size: usize,
@@ -68,6 +76,20 @@ pub struct Config {
     /// Maximum size of JSON-RPC message to accept from any connected consensus node.
     #[arg(long, value_name = "MEGABYTES", default_value = "128")]
     pub body_limit_mb: usize,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ClientJwtSecrets {
+    pub secrets: HashMap<String, String>,
+}
+
+impl ClientJwtSecrets {
+    pub fn from_file(path: &Path) -> Result<Self, String> {
+        let secrets_str = std::fs::read_to_string(path)
+            .map_err(|e| format!("IO error reading secrets from {}: {}", path.display(), e))?;
+        toml::from_str(&secrets_str)
+            .map_err(|e| format!("Parse error reading secrets from {}: {}", path.display(), e))
+    }
 }
 
 #[derive(Debug, Clone)]

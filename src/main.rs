@@ -1,5 +1,6 @@
 use crate::{
     config::Config,
+    jwt::KeyCollection,
     multiplexer::Multiplexer,
     transition_config::handle_transition_config,
     types::{
@@ -8,10 +9,11 @@ use crate::{
 };
 use axum::{
     extract::{rejection::JsonRejection, DefaultBodyLimit, State},
+    headers::{authorization::Bearer, Authorization},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Json, Router, TypedHeader,
 };
 use clap::Parser;
 use eth2::types::MainnetEthSpec;
@@ -31,6 +33,7 @@ use tokio::runtime::Handle;
 mod base_fee;
 mod config;
 mod fcu;
+mod jwt;
 mod logging;
 mod meta;
 mod multiplexer;
@@ -56,13 +59,18 @@ async fn main() {
     let body_limit_mb = config.body_limit_mb;
     let listen_address = config.listen_address;
     let listen_port = config.listen_port;
-    let multiplexer = Arc::new(Multiplexer::<E>::new(config, executor, log).unwrap());
+    let client_jwt_collection = KeyCollection::load(&config.client_jwt_secrets).unwrap();
+    let multiplexer = Multiplexer::<E>::new(config, executor, log).unwrap();
+    let app_state = Arc::new(AppState {
+        client_jwt_collection,
+        multiplexer,
+    });
 
     let app = Router::new()
         .route("/", post(handle_client_json_rpc))
         .route("/canonical", post(handle_controller_json_rpc))
         .route("/health", get(handle_health))
-        .with_state(multiplexer)
+        .with_state(app_state)
         .layer(DefaultBodyLimit::max(body_limit_mb * MEGABYTE));
 
     let addr = SocketAddr::from((listen_address, listen_port));
@@ -71,6 +79,11 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+struct AppState {
+    client_jwt_collection: KeyCollection,
+    multiplexer: Multiplexer<E>,
 }
 
 // TODO: do something with signal/signal_rx
@@ -82,9 +95,24 @@ async fn new_task_executor(log: Logger) -> TaskExecutor {
 }
 
 async fn handle_client_json_rpc(
-    State(multiplexer): State<Arc<Multiplexer<E>>>,
+    State(state): State<Arc<AppState>>,
+    TypedHeader(jwt_token_str): TypedHeader<Authorization<Bearer>>,
     maybe_requests: Result<Json<Requests>, JsonRejection>,
 ) -> Json<Responses> {
+    let jwt_key_collection = &state.client_jwt_collection;
+    let multiplexer = &state.multiplexer;
+
+    // Check JWT auth.
+    if let Err(e) = jwt_key_collection.verify(jwt_token_str.token()) {
+        tracing::warn!(
+            error = ?e,
+            "JWT auth failed"
+        );
+        return Json(Responses::Single(MaybeErrorResponse::Err(
+            ErrorResponse::parse_error_generic(serde_json::json!(0), e),
+        )));
+    }
+
     let requests = match maybe_requests {
         Ok(Json(requests)) => requests,
         Err(e) => {
@@ -96,13 +124,13 @@ async fn handle_client_json_rpc(
 
     match requests {
         Requests::Single(request) => Json(Responses::Single(
-            process_client_request(&multiplexer, request).await.into(),
+            process_client_request(multiplexer, request).await.into(),
         )),
         Requests::Multiple(requests) => {
             let mut results = vec![];
 
             for request in requests {
-                results.push(process_client_request(&multiplexer, request).await.into());
+                results.push(process_client_request(multiplexer, request).await.into());
             }
 
             Json(Responses::Multiple(results))
@@ -140,9 +168,10 @@ async fn process_client_request(
 }
 
 async fn handle_controller_json_rpc(
-    State(multiplexer): State<Arc<Multiplexer<E>>>,
+    State(state): State<Arc<AppState>>,
     maybe_request: Result<Json<Request>, JsonRejection>,
 ) -> Result<Json<Response>, Json<ErrorResponse>> {
+    let multiplexer = &state.multiplexer;
     let Json(request) = maybe_request
         .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
 
