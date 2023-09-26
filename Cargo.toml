@@ -12,7 +12,7 @@ eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev
 eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
 ethereum_serde_utils = "0.5.1"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
-axum = "0.6.10"
+axum = { version = "0.6.10", features = ["headers"] }
 lru = "0.10.0"
 serde_json = "1.0.0"
 serde = { version = "1.0.0", features = ["derive"] }
@@ -27,6 +27,11 @@ slog = "2.7.0"
 clap = { version = "4.0.0", features = ["derive"] }
 strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 keccak-hash = "0.10.0"
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.7"
+toml = "0.8.0"
+hex = "0.4.3"
 
 [patch]
 [patch.crates-io]
