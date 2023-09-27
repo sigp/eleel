@@ -22,7 +22,10 @@ pub struct Config {
     /// Path to the JWT secret for the primary execution engine.
     #[arg(long, value_name = "PATH")]
     pub ee_jwt_secret: String,
-    /// Path to TOML file JWT secrets for the non-canonical CL clients.
+    /// Path to the JWT secret for the controlling consensus client.
+    #[arg(long, value_name = "PATH")]
+    pub controller_jwt_secret: PathBuf,
+    /// Path to TOML file of JWT secrets for the non-controlling consensus clients.
     ///
     /// See docs for TOML file format.
     #[arg(long, value_name = "PATH")]
