@@ -118,6 +118,18 @@ Eleel does not build valid execution blocks, but will build _invalid_ dummy exec
 payloads. This is designed for use with [blockdreamer][blockdreamer] only and
 **will cause you to propose invalid blocks** if used by a validator client.
 
+If running Lighthouse as the controller, you should ensure it is configured to send payload
+attributes every slot using these flags:
+
+```
+lighthouse bn \
+  --always-prepare-payload \
+  --prepare-payload-lookahead 8000 \
+  --suggested-fee-recipient 0xffffffffffffffffffffffffffffffffffffffff
+```
+
+Some other consensus clients provide similar flags.
+
 ## License
 
 Copyright Sigma Prime 2023 and contributors.
