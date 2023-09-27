@@ -87,10 +87,30 @@ lighthouse bn \
   --execution-jwt-id "node1"
 ```
 
-### CLI reference
+## CLI reference
 
 For full CLI options see [`./docs/cli-reference.md`](./docs/cli-reference.md), or run
 `eleel --help`.
+
+## HTTP API reference
+
+- `POST /`: JSON-RPC endpoint for multiplexed consensus clients. Requires a JWT
+  token authenticated by one of the secrets in the `--client-jwt-secrets` file.
+- `POST /canonical`: JSON-RPC endpoint for the controlling consensus client. Requires a JWT
+  token authenticated by the JWT secret provided to the
+  `--controller-jwt-secret` flag.
+- `GET /health`: health endpoint returning a 200 OK whenever Eleel is running.
+
+## Logging
+
+Eleel only prints logs when the `RUST_LOG` environment variable is set. We recommend running
+with debug logs enabled like so:
+
+```
+RUST_LOG=eleel=debug eleel ...
+```
+
+More information about JWT authentication can be seen at `trace` level.
 
 ## Block Building
 
