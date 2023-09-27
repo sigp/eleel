@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    jwt::KeyCollection,
+    jwt::{jwt_secret_from_path, verify_single_token, KeyCollection, Secret},
     multiplexer::Multiplexer,
     transition_config::handle_transition_config,
     types::{
@@ -59,9 +59,11 @@ async fn main() {
     let body_limit_mb = config.body_limit_mb;
     let listen_address = config.listen_address;
     let listen_port = config.listen_port;
+    let controller_jwt_secret = jwt_secret_from_path(&config.controller_jwt_secret).unwrap();
     let client_jwt_collection = KeyCollection::load(&config.client_jwt_secrets).unwrap();
     let multiplexer = Multiplexer::<E>::new(config, executor, log).unwrap();
     let app_state = Arc::new(AppState {
+        controller_jwt_secret,
         client_jwt_collection,
         multiplexer,
     });
@@ -82,6 +84,7 @@ async fn main() {
 }
 
 struct AppState {
+    controller_jwt_secret: Secret,
     client_jwt_collection: KeyCollection,
     multiplexer: Multiplexer<E>,
 }
@@ -169,9 +172,24 @@ async fn process_client_request(
 
 async fn handle_controller_json_rpc(
     State(state): State<Arc<AppState>>,
+    TypedHeader(jwt_token_str): TypedHeader<Authorization<Bearer>>,
     maybe_request: Result<Json<Request>, JsonRejection>,
 ) -> Result<Json<Response>, Json<ErrorResponse>> {
+    let jwt_secret = &state.controller_jwt_secret;
     let multiplexer = &state.multiplexer;
+
+    // Check JWT auth.
+    if let Err(e) = verify_single_token(jwt_token_str.token(), jwt_secret) {
+        tracing::warn!(
+            error = ?e,
+            "Controller JWT auth failed"
+        );
+        return Err(Json(ErrorResponse::parse_error_generic(
+            serde_json::json!(0),
+            e,
+        )));
+    }
+
     let Json(request) = maybe_request
         .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
 
