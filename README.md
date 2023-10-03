@@ -46,8 +46,8 @@ node2 = "fb6073f77160f9a7ce11190d3612e841daea2e7319a59e1d82a8804e9fa193ee"
 ```
 
 The identifiers `node1` and `node2` are _key IDs_ which are used by Eleel to decide which secret
-to use when authenticating a request. It does this by examining the `key` field of the claim
-(distinct from the standard JWT key-id). If the `key` is not set by the client then Eleel
+to use when authenticating a request. It does this by examining the `id` field of the claim
+(distinct from the standard JWT key-id). If the `id` is not set by the client then Eleel
 tries all of the keys in a random order looking for a match (slow).
 
 Putting this all together, here's an example of Eleel sharing a Geth node between two Lighthouse
