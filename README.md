@@ -12,7 +12,7 @@ Eleel is written in Rust and makes use of components from [Lighthouse][].
 ## Build from source
 
 ```
-cargo install --release --locked
+ cargo install --locked --path .
 ```
 
 A binary will be installed to `~/.cargo/bin/eleel`.
@@ -99,7 +99,7 @@ For full CLI options see [`./docs/cli-reference.md`](./docs/cli-reference.md), o
 - `POST /canonical`: JSON-RPC endpoint for the controlling consensus client. Requires a JWT
   token authenticated by the JWT secret provided to the
   `--controller-jwt-secret` flag.
-- `GET /health`: health endpoint returning a 200 OK whenever Eleel is running.
+- `curl -X GET "http://localhost:8552/health" -v`: health endpoint returning a 200 OK whenever Eleel is running.
 
 ## Logging
 
@@ -127,6 +127,8 @@ lighthouse bn \
   --prepare-payload-lookahead 8000 \
   --suggested-fee-recipient 0xffffffffffffffffffffffffffffffffffffffff
 ```
+
+> Note: If both consensus clients are using the same port (for example, Lighthouse uses p2p port 9000 by default), the second consensus client will require an additional flag `--port`.
 
 Some other consensus clients provide similar flags.
 
