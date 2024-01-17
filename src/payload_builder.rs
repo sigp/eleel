@@ -94,7 +94,8 @@ impl<E: EthSpec> Multiplexer<E> {
         let prev_randao = payload_attributes.prev_randao();
         let gas_limit = 30_000_000;
         let fork_name = self.spec.fork_name_at_slot::<E>(slot);
-        let transactions = VariableList::new(vec![]).unwrap();
+        let transactions =
+            VariableList::new(vec![VariableList::new(vec![0xffu8; 1_000_000]).unwrap()]).unwrap();
         let state_root = parent_info.state_root;
         let receipts_root = keccak_hash::KECCAK_EMPTY_LIST_RLP.as_fixed_bytes().into();
         let logs_bloom = FixedVector::default();
