@@ -75,6 +75,12 @@ impl<E: EthSpec> Multiplexer<E> {
 
         // Derived values.
         let spec = config.network.network.chain_spec::<E>()?;
+        tracing::info!(
+            bellatrix_fork_epoch = ?spec.bellatrix_fork_epoch,
+            capella_fork_epoch = ?spec.capella_fork_epoch,
+            deneb_fork_epoch = ?spec.deneb_fork_epoch,
+            "fork schedule"
+        );
         let genesis_state_timeout = Duration::from_secs(180);
         let genesis_state = config
             .network

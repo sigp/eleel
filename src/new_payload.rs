@@ -21,7 +21,8 @@ impl<E: EthSpec> Multiplexer<E> {
         &self,
         request: Request,
     ) -> Result<Response, ErrorResponse> {
-        tracing::info!("processing payload from controller");
+        let method = request.method.clone();
+        tracing::info!(method = method, "processing payload from controller");
         let (id, json_execution_payload, versioned_hashes, parent_beacon_block_root) =
             self.decode_new_payload(request)?;
 
