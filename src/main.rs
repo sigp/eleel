@@ -2,7 +2,6 @@ use crate::{
     config::Config,
     jwt::{jwt_secret_from_path, verify_single_token, KeyCollection, Secret},
     multiplexer::Multiplexer,
-    transition_config::handle_transition_config,
     types::{
         ErrorResponse, MaybeErrorResponse, Request, Requests, Response, Responses, TaskExecutor,
     },
@@ -18,10 +17,10 @@ use axum::{
 use clap::Parser;
 use eth2::types::MainnetEthSpec;
 use execution_layer::http::{
-    ENGINE_EXCHANGE_CAPABILITIES, ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1,
-    ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2,
-    ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1, ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1,
-    ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2,
+    ENGINE_EXCHANGE_CAPABILITIES, ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2,
+    ENGINE_FORKCHOICE_UPDATED_V3, ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1,
+    ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1, ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2,
+    ENGINE_GET_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3,
     ETH_SYNCING,
 };
 use futures::channel::mpsc::channel;
@@ -39,7 +38,6 @@ mod meta;
 mod multiplexer;
 mod new_payload;
 mod payload_builder;
-mod transition_config;
 mod types;
 
 // TODO: allow other specs
@@ -61,7 +59,7 @@ async fn main() {
     let listen_port = config.listen_port;
     let controller_jwt_secret = jwt_secret_from_path(&config.controller_jwt_secret).unwrap();
     let client_jwt_collection = KeyCollection::load(&config.client_jwt_secrets).unwrap();
-    let multiplexer = Multiplexer::<E>::new(config, executor, log).unwrap();
+    let multiplexer = Multiplexer::<E>::new(config, executor, log).await.unwrap();
     let app_state = Arc::new(AppState {
         controller_jwt_secret,
         client_jwt_collection,
@@ -146,13 +144,12 @@ async fn process_client_request(
     request: Request,
 ) -> Result<Response, ErrorResponse> {
     match request.method.as_str() {
-        ENGINE_FORKCHOICE_UPDATED_V1 | ENGINE_FORKCHOICE_UPDATED_V2 => {
-            multiplexer.handle_fcu(request).await
-        }
-        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 => {
+        ENGINE_FORKCHOICE_UPDATED_V1
+        | ENGINE_FORKCHOICE_UPDATED_V2
+        | ENGINE_FORKCHOICE_UPDATED_V3 => multiplexer.handle_fcu(request).await,
+        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 | ENGINE_NEW_PAYLOAD_V3 => {
             multiplexer.handle_new_payload(request).await
         }
-        ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1 => handle_transition_config(request).await,
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
@@ -163,7 +160,7 @@ async fn process_client_request(
         | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
-        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
+        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
             multiplexer.handle_get_payload(request).await
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
@@ -194,13 +191,12 @@ async fn handle_controller_json_rpc(
         .map_err(|e| ErrorResponse::parse_error_generic(serde_json::json!(0), e.body_text()))?;
 
     match request.method.as_str() {
-        ENGINE_FORKCHOICE_UPDATED_V1 | ENGINE_FORKCHOICE_UPDATED_V2 => {
-            multiplexer.handle_controller_fcu(request).await
-        }
-        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 => {
+        ENGINE_FORKCHOICE_UPDATED_V1
+        | ENGINE_FORKCHOICE_UPDATED_V2
+        | ENGINE_FORKCHOICE_UPDATED_V3 => multiplexer.handle_controller_fcu(request).await,
+        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 | ENGINE_NEW_PAYLOAD_V3 => {
             multiplexer.handle_controller_new_payload(request).await
         }
-        ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_V1 => handle_transition_config(request).await,
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
@@ -211,7 +207,7 @@ async fn handle_controller_json_rpc(
         | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
-        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 => {
+        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
             multiplexer.handle_get_payload(request).await
         }
         method => Err(ErrorResponse::unsupported_method(request.id, method)),

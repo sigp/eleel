@@ -14,6 +14,7 @@ use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::time::Duration;
 use tokio::sync::Mutex;
 
 pub struct Multiplexer<E: EthSpec> {
@@ -36,7 +37,7 @@ pub struct NewPayloadCacheEntry {
 }
 
 impl<E: EthSpec> Multiplexer<E> {
-    pub fn new(config: Config, executor: TaskExecutor, log: Logger) -> Result<Self, String> {
+    pub async fn new(config: Config, executor: TaskExecutor, log: Logger) -> Result<Self, String> {
         let engine: Engine = {
             let jwt_secret_path = PathBuf::from(&config.ee_jwt_secret);
             let jwt_id = Some("eleel".to_string());
@@ -74,7 +75,13 @@ impl<E: EthSpec> Multiplexer<E> {
 
         // Derived values.
         let spec = config.network.network.chain_spec::<E>()?;
-        let genesis_state = config.network.network.beacon_state::<E>()?;
+        let genesis_state_timeout = Duration::from_secs(180);
+        let genesis_state = config
+            .network
+            .network
+            .genesis_state::<E>(None, genesis_state_timeout, &log)
+            .await?
+            .ok_or("no genesis state")?;
         let genesis_time = genesis_state.genesis_time();
 
         Ok(Self {
