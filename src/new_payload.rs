@@ -152,6 +152,7 @@ impl<E: EthSpec> Multiplexer<E> {
         Response::new(id, status)
     }
 
+    #[allow(clippy::type_complexity)]
     fn decode_new_payload(
         &self,
         request: Request,

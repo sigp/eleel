@@ -22,7 +22,7 @@ impl<E: EthSpec> Multiplexer<E> {
         let head_hash = fcu.head_block_hash;
         tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
 
-        let opt_payload_attributes = if &method_name == ENGINE_FORKCHOICE_UPDATED_V2 {
+        let opt_payload_attributes = if method_name == ENGINE_FORKCHOICE_UPDATED_V2 {
             json_payload_attributes
                 .map(serde_json::from_value)
                 .transpose()
