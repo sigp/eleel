@@ -5,20 +5,46 @@ use crate::{
     types::{
         ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response,
         JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, Request, Response, TransparentJsonPayloadId,
+        JsonPayloadStatusV1Status, JsonValue, Request, Response, TransparentJsonPayloadId,
     },
 };
 use eth2::types::EthSpec;
+use execution_layer::http::ENGINE_FORKCHOICE_UPDATED_V2;
 use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_controller_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
         // FIXME: might need ForkVersionDeserialize for payload attributes
-        let (id, (fcu, opt_payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
+        let method_name = request.method.clone();
+        let (id, (fcu, json_payload_attributes)) =
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonValue>)>()?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
+
+        let opt_payload_attributes = if method_name == ENGINE_FORKCHOICE_UPDATED_V2 {
+            json_payload_attributes
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(|e| {
+                    ErrorResponse::parse_error_generic(
+                        id.clone(),
+                        format!("invalid payload attributes: {e}"),
+                    )
+                })?
+                .map(JsonPayloadAttributes::V2)
+        } else {
+            json_payload_attributes
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(|e| {
+                    ErrorResponse::parse_error_generic(
+                        id.clone(),
+                        format!("invalid payload attributes: {e}"),
+                    )
+                })?
+                .map(JsonPayloadAttributes::V3)
+        };
 
         let payload_status = if let Some(status) = self.get_cached_fcu(&fcu, true).await {
             status
@@ -97,10 +123,7 @@ impl<E: EthSpec> Multiplexer<E> {
                 "processing payload attributes from controller"
             );
             match self
-                .register_attributes(
-                    head_hash,
-                    JsonPayloadAttributes::V2(payload_attributes).into(),
-                )
+                .register_attributes(head_hash, payload_attributes.into())
                 .await
             {
                 Ok(id) => Some(TransparentJsonPayloadId(id)),

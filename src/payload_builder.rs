@@ -1,14 +1,16 @@
 use crate::{
     base_fee::expected_base_fee_per_gas,
     types::{
-        JsonExecutionPayload, JsonGetPayloadResponseV1, JsonGetPayloadResponseV2,
-        JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId,
+        JsonBlobsBundleV1, JsonExecutionPayload, JsonGetPayloadResponseV1,
+        JsonGetPayloadResponseV2, JsonGetPayloadResponseV3, JsonPayloadStatusV1Status, PayloadId,
+        TransparentJsonPayloadId,
     },
     ErrorResponse, Multiplexer, Request, Response,
 };
 use eth2::types::{
-    EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella, ExecutionPayloadMerge,
-    FixedVector, ForkName, Hash256, Uint256, Unsigned, VariableList,
+    BlobsBundle, EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella,
+    ExecutionPayloadDeneb, ExecutionPayloadMerge, FixedVector, ForkName, Hash256, Uint256,
+    Unsigned, VariableList,
 };
 use execution_layer::{ExecutionLayer, PayloadAttributes};
 use lru::LruCache;
@@ -74,6 +76,7 @@ impl<E: EthSpec> Multiplexer<E> {
         let mut builder = self.payload_builder.lock().await;
         let attributes_key = (parent_hash, payload_attributes);
         let payload_attributes = &attributes_key.1;
+        let parent_beacon_block_root = payload_attributes.parent_beacon_block_root().ok();
 
         // Return early if payload already known/built.
         if let Some(id) = builder.payload_attributes.get(&attributes_key) {
@@ -105,6 +108,8 @@ impl<E: EthSpec> Multiplexer<E> {
             parent_info.gas_used,
             parent_info.gas_limit,
         );
+        let blob_gas_used = 0;
+        let excess_blob_gas = 0;
         let block_hash = ExecutionBlockHash::zero();
 
         let mut payload = match fork_name {
@@ -148,10 +153,39 @@ impl<E: EthSpec> Multiplexer<E> {
                     withdrawals,
                 })
             }
+            ForkName::Deneb => {
+                let withdrawals = payload_attributes
+                    .withdrawals()
+                    .map_err(|_| "no withdrawals".to_string())?
+                    .clone()
+                    .into();
+                ExecutionPayload::Deneb(ExecutionPayloadDeneb {
+                    parent_hash,
+                    fee_recipient,
+                    state_root,
+                    receipts_root,
+                    logs_bloom,
+                    prev_randao,
+                    block_number,
+                    gas_limit,
+                    gas_used,
+                    timestamp,
+                    extra_data,
+                    base_fee_per_gas,
+                    block_hash,
+                    transactions,
+                    withdrawals,
+                    blob_gas_used,
+                    excess_blob_gas,
+                })
+            }
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
 
-        let (block_hash, _) = ExecutionLayer::<E>::calculate_execution_block_hash(payload.to_ref());
+        let (block_hash, _) = ExecutionLayer::<E>::calculate_execution_block_hash(
+            payload.to_ref(),
+            parent_beacon_block_root.unwrap_or_default(),
+        );
         *payload.block_hash_mut() = block_hash;
 
         builder.payload_attributes.put(attributes_key, id);
@@ -221,7 +255,6 @@ impl<E: EthSpec> Multiplexer<E> {
         };
         let json_payload = JsonExecutionPayload::from(payload);
         let block_value = Uint256::zero();
-        // Slightly awkward due to `JsonExecutionPayload` not implementing Serialize properly
         match json_payload {
             JsonExecutionPayload::V1(execution_payload) => Response::new(
                 id,
@@ -237,6 +270,19 @@ impl<E: EthSpec> Multiplexer<E> {
                     block_value,
                 },
             ),
+            JsonExecutionPayload::V3(execution_payload) => {
+                let blobs_bundle = JsonBlobsBundleV1::from(BlobsBundle::default());
+                let should_override_builder = false;
+                Response::new(
+                    id,
+                    JsonGetPayloadResponseV3 {
+                        execution_payload,
+                        block_value,
+                        blobs_bundle,
+                        should_override_builder,
+                    },
+                )
+            }
         }
     }
 }

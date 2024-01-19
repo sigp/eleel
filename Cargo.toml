@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-execution_layer = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
+execution_layer = { git = "https://github.com/sigp/lighthouse", tag = "v4.6.0-rc.0" }
 tree_hash = "0.5.1"
 tree_hash_derive = "0.5.1"
-task_executor = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
-eth2_network_config = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
-eth2 = { git = "https://github.com/michaelsproul/lighthouse", rev = "c144ae391edc938dbc5e185a99df78b8c8cb1c76" }
+task_executor = { git = "https://github.com/sigp/lighthouse", tag = "v4.6.0-rc.0" }
+eth2_network_config = { git = "https://github.com/sigp/lighthouse", tag = "v4.6.0-rc.0" }
+eth2 = { git = "https://github.com/sigp/lighthouse", tag = "v4.6.0-rc.0" }
 ethereum_serde_utils = "0.5.1"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = { version = "0.6.10", features = ["headers"] }
@@ -32,14 +32,3 @@ hmac = "0.12.1"
 sha2 = "0.10.7"
 toml = "0.8.0"
 hex = "0.4.3"
-
-[patch]
-[patch.crates-io]
-arbitrary = { git = "https://github.com/michaelsproul/arbitrary", rev="f002b99989b561ddce62e4cf2887b0f8860ae991" }
-
-[patch."https://github.com/ralexstokes/mev-rs"]
-mev-rs = { git = "https://github.com/ralexstokes//mev-rs", rev = "7813d4a4a564e0754e9aaab2d95520ba437c3889" }
-[patch."https://github.com/ralexstokes/ethereum-consensus"]
-ethereum-consensus = { git = "https://github.com/ralexstokes//ethereum-consensus", rev = "9b0ee0a8a45b968c8df5e7e64ea1c094e16f053d" }
-[patch."https://github.com/ralexstokes/ssz-rs"]
-ssz-rs = { git = "https://github.com/ralexstokes//ssz-rs", rev = "adf1a0b14cef90b9536f28ef89da1fab316465e1" }
