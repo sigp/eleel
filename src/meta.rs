@@ -6,6 +6,15 @@ use crate::{
 use eth2::types::EthSpec;
 use std::time::Duration;
 
+const STANDARD_TIMEOUT_MILLIS: u64 = 15_000;
+
+/// Timeout when doing a eth_blockNumber call.
+const BLOCK_NUMBER_TIMEOUT_MILLIS: u64 = STANDARD_TIMEOUT_MILLIS;
+/// Timeout when doing an eth_getBlockByNumber call.
+const GET_BLOCK_TIMEOUT_MILLIS: u64 = STANDARD_TIMEOUT_MILLIS;
+/// Timeout when doing an eth_getLogs to read the deposit contract logs.
+const GET_DEPOSIT_LOG_TIMEOUT_MILLIS: u64 = 60_000;
+
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_syncing(&self, request: Request) -> Result<Response, ErrorResponse> {
         // TODO: actually check EL status, maybe with a cache
@@ -16,8 +25,7 @@ impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_chain_id(&self, request: Request) -> Result<Response, ErrorResponse> {
         let (id, _) = request.parse_as::<Vec<()>>()?;
 
-        // TODO: dynamic timeout
-        let timeout = Duration::from_secs(1);
+        let timeout = Duration::from_millis(STANDARD_TIMEOUT_MILLIS);
         let chain_id = self
             .engine
             .api
@@ -48,8 +56,12 @@ impl<E: EthSpec> Multiplexer<E> {
     pub async fn proxy_directly(&self, request: Request) -> Result<Response, ErrorResponse> {
         let id = request.id;
 
-        // TODO: adjust timeout
-        let timeout = Duration::from_secs(12);
+        let timeout = match request.method.as_str() {
+            "eth_getBlockByNumber" => Duration::from_millis(GET_BLOCK_TIMEOUT_MILLIS),
+            "eth_blockNumber" => Duration::from_millis(BLOCK_NUMBER_TIMEOUT_MILLIS),
+            "eth_getLogs" => Duration::from_millis(GET_DEPOSIT_LOG_TIMEOUT_MILLIS),
+            _ => Duration::from_millis(STANDARD_TIMEOUT_MILLIS),
+        };
 
         let result: JsonValue = self
             .engine
