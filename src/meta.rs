@@ -6,15 +6,6 @@ use crate::{
 use eth2::types::EthSpec;
 use std::time::Duration;
 
-const STANDARD_TIMEOUT_MILLIS: u64 = 15_000;
-
-/// Timeout when doing a eth_blockNumber call.
-const BLOCK_NUMBER_TIMEOUT_MILLIS: u64 = STANDARD_TIMEOUT_MILLIS;
-/// Timeout when doing an eth_getBlockByNumber call.
-const GET_BLOCK_TIMEOUT_MILLIS: u64 = STANDARD_TIMEOUT_MILLIS;
-/// Timeout when doing an eth_getLogs to read the deposit contract logs.
-const GET_DEPOSIT_LOG_TIMEOUT_MILLIS: u64 = 60_000;
-
 impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_syncing(&self, request: Request) -> Result<Response, ErrorResponse> {
         // TODO: actually check EL status, maybe with a cache
