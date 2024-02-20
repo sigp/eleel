@@ -25,7 +25,7 @@ impl<E: EthSpec> Multiplexer<E> {
     pub async fn handle_chain_id(&self, request: Request) -> Result<Response, ErrorResponse> {
         let (id, _) = request.parse_as::<Vec<()>>()?;
 
-        let timeout = Duration::from_millis(STANDARD_TIMEOUT_MILLIS);
+        let timeout = Duration::from_millis(self.config.ee_timeout_millis);
         let chain_id = self
             .engine
             .api
@@ -55,13 +55,7 @@ impl<E: EthSpec> Multiplexer<E> {
 
     pub async fn proxy_directly(&self, request: Request) -> Result<Response, ErrorResponse> {
         let id = request.id;
-
-        let timeout = match request.method.as_str() {
-            "eth_getBlockByNumber" => Duration::from_millis(GET_BLOCK_TIMEOUT_MILLIS),
-            "eth_blockNumber" => Duration::from_millis(BLOCK_NUMBER_TIMEOUT_MILLIS),
-            "eth_getLogs" => Duration::from_millis(GET_DEPOSIT_LOG_TIMEOUT_MILLIS),
-            _ => Duration::from_millis(STANDARD_TIMEOUT_MILLIS),
-        };
+        let timeout = Duration::from_millis(self.config.ee_timeout_millis);
 
         let result: JsonValue = self
             .engine
