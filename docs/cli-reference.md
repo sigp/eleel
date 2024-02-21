@@ -101,7 +101,7 @@ Options:
 
           [default: 128]
 
-      --ee_timeout_millis <MILLIS>
+      --ee-timeout-millis <MILLIS>
           Maximum timeout that need to wait for a response from the execution
 
           [default: 15000]
