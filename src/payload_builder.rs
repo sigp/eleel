@@ -12,7 +12,7 @@ use eth2::types::{
     ExecutionPayloadDeneb, ExecutionPayloadMerge, FixedVector, ForkName, Hash256, Uint256,
     Unsigned, VariableList,
 };
-use execution_layer::{ExecutionLayer, PayloadAttributes};
+use execution_layer::{calculate_execution_block_hash, PayloadAttributes};
 use lru::LruCache;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
@@ -182,10 +182,8 @@ impl<E: EthSpec> Multiplexer<E> {
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
 
-        let (block_hash, _) = ExecutionLayer::<E>::calculate_execution_block_hash(
-            payload.to_ref(),
-            parent_beacon_block_root.unwrap_or_default(),
-        );
+        let (block_hash, _) =
+            calculate_execution_block_hash(payload.to_ref(), parent_beacon_block_root);
         *payload.block_hash_mut() = block_hash;
 
         builder.payload_attributes.put(attributes_key, id);

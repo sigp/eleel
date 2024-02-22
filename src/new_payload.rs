@@ -10,10 +10,7 @@ use crate::{
 use eth2::types::{
     EthSpec, ExecutionBlockHash, ExecutionPayload, ForkName, Hash256, Slot, VersionedHash,
 };
-use execution_layer::{
-    http::{ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3},
-    ExecutionLayer,
-};
+use execution_layer::http::{ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3};
 use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
@@ -26,27 +23,14 @@ impl<E: EthSpec> Multiplexer<E> {
         let (id, json_execution_payload, versioned_hashes, parent_beacon_block_root) =
             self.decode_new_payload(request)?;
 
-        let block_hash = *json_execution_payload.block_hash();
-        let block_number = *json_execution_payload.block_number();
-
         let execution_payload = ExecutionPayload::from(json_execution_payload);
-        let new_payload_request = match execution_payload.clone() {
-            ExecutionPayload::Merge(execution_payload) => {
-                NewPayloadRequest::Merge(NewPayloadRequestMerge { execution_payload })
-            }
-            ExecutionPayload::Capella(execution_payload) => {
-                NewPayloadRequest::Capella(NewPayloadRequestCapella { execution_payload })
-            }
-            ExecutionPayload::Deneb(execution_payload) => {
-                // TODO: error here if versioned hashes or parent root are None
-                NewPayloadRequest::Deneb(NewPayloadRequestDeneb {
-                    execution_payload,
-                    versioned_hashes: versioned_hashes.unwrap_or_default(),
-                    parent_beacon_block_root: parent_beacon_block_root.unwrap_or_default(),
-                })
-            }
-        };
-
+        let block_hash = execution_payload.block_hash();
+        let block_number = execution_payload.block_number();
+        let new_payload_request = Self::new_payload_request_from_parts(
+            &execution_payload,
+            versioned_hashes,
+            parent_beacon_block_root,
+        );
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
             status
         } else {
@@ -87,13 +71,32 @@ impl<E: EthSpec> Multiplexer<E> {
 
     pub async fn handle_new_payload(&self, request: Request) -> Result<Response, ErrorResponse> {
         tracing::info!("processing new payload from client");
-        // TODO: verify versioned hashes
-        let (id, execution_payload, _versioned_hashes, parent_block_root) =
+        let (id, json_execution_payload, versioned_hashes, parent_block_root) =
             self.decode_new_payload(request)?;
 
-        // TODO: should check block hash validity before keying the cache on it
-        let block_hash = *execution_payload.block_hash();
-        let block_number = *execution_payload.block_number();
+        let execution_payload = ExecutionPayload::from(json_execution_payload);
+        let block_hash = execution_payload.block_hash();
+        let block_number = execution_payload.block_number();
+        let new_payload_request = Self::new_payload_request_from_parts(
+            &execution_payload,
+            versioned_hashes,
+            parent_block_root,
+        );
+
+        // Check block hash prior to keying cache. This prevents responding with an incorrect
+        // cached response for a request with a mismatch/invalid block hash.
+        if let Err(e) = new_payload_request.verify_payload_block_hash() {
+            tracing::warn!(
+                block_hash = ?block_hash,
+                block_number = ?block_number,
+                error = ?e,
+                "incorrect block hash"
+            );
+            return Err(ErrorResponse::invalid_request(
+                id,
+                format!("incorrect block hash {block_hash:?}"),
+            ));
+        }
 
         // If this is a *recent* payload, wait a short time for a definite response from the EL.
         // Chances are it's busy processing the payload sent by the controlling BN.
@@ -116,26 +119,21 @@ impl<E: EthSpec> Multiplexer<E> {
             }
             status
         } else {
-            // Before sending a synthetic SYNCING response, check the block hash.
-            // Use a 0x0 hash if no parent block root was provided. The hash is only required
-            // for Deneb and later, and should be set (by decode_) whenever Deneb is activated.
-            let execution_payload = ExecutionPayload::from(execution_payload);
-            let (calculated_block_hash, _) = ExecutionLayer::<E>::calculate_execution_block_hash(
-                execution_payload.to_ref(),
-                parent_block_root.unwrap_or_default(),
-            );
-
-            if calculated_block_hash != block_hash {
+            // Before sending a synthetic SYNCING response we MUST check the block (checked above)
+            // and the versioned hashes (post-Deneb).
+            if let Err(e) = new_payload_request.verify_versioned_hashes() {
                 tracing::warn!(
-                    expected = ?block_hash,
-                    computed = ?calculated_block_hash,
-                    "mismatched block hash"
+                    block_hash = ?block_hash,
+                    block_number = ?block_number,
+                    error = ?e,
+                    "incorrect versioned hashes"
                 );
                 return Err(ErrorResponse::invalid_request(
                     id,
-                    format!("mismatched block hash {calculated_block_hash:?} vs {block_hash:?}"),
+                    "incorrect versioned hashes".into(),
                 ));
             }
+
             if is_recent {
                 tracing::info!("sending SYNCING response on recent newPayload");
             } else {
@@ -150,6 +148,31 @@ impl<E: EthSpec> Multiplexer<E> {
         };
 
         Response::new(id, status)
+    }
+
+    fn new_payload_request_from_parts(
+        execution_payload: &ExecutionPayload<E>,
+        versioned_hashes: Option<Vec<VersionedHash>>,
+        parent_beacon_block_root: Option<Hash256>,
+    ) -> NewPayloadRequest<E> {
+        match execution_payload {
+            ExecutionPayload::Merge(execution_payload) => {
+                NewPayloadRequest::Merge(NewPayloadRequestMerge { execution_payload })
+            }
+            ExecutionPayload::Capella(execution_payload) => {
+                NewPayloadRequest::Capella(NewPayloadRequestCapella { execution_payload })
+            }
+            // The `versioned_hashes` and `parent_block_root` should also be populated post-Deneb.
+            // We could error here, but we defer to `verify_payload_block_hash` and similar, or
+            // the actual EL to do that validation.
+            ExecutionPayload::Deneb(execution_payload) => {
+                NewPayloadRequest::Deneb(NewPayloadRequestDeneb {
+                    execution_payload,
+                    versioned_hashes: versioned_hashes.unwrap_or_default(),
+                    parent_beacon_block_root: parent_beacon_block_root.unwrap_or_default(),
+                })
+            }
+        }
     }
 
     #[allow(clippy::type_complexity)]
