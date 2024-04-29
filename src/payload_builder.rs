@@ -186,6 +186,11 @@ impl<E: EthSpec> Multiplexer<E> {
             calculate_execution_block_hash(payload.to_ref(), parent_beacon_block_root);
         *payload.block_hash_mut() = block_hash;
 
+        tracing::info!(
+            key = ?attributes_key,
+            "cached payload attributes"
+        );
+
         builder.payload_attributes.put(attributes_key, id);
         builder.payloads.put(id, payload);
         builder.next_payload_id += 1;
@@ -202,9 +207,9 @@ impl<E: EthSpec> Multiplexer<E> {
             .lock()
             .await
             .payload_attributes
-            .get(&(parent_hash, payload_attributes))
+            .get(&(parent_hash, payload_attributes.clone()))
             .copied()
-            .ok_or_else(|| format!("no payload ID known for parent {parent_hash:?}"))
+            .ok_or_else(|| format!("no payload ID known for parent {parent_hash:?} and payload_attributes {payload_attributes:?}"))
     }
 
     /// Track a payload from the canonical chain.
