@@ -9,8 +9,8 @@ pub use execution_layer::{
     json_structures::{
         JsonBlobsBundleV1, JsonExecutionPayload, JsonForkchoiceUpdatedV1Response,
         JsonGetPayloadResponseV1, JsonGetPayloadResponseV2, JsonGetPayloadResponseV3,
-        JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, TransparentJsonPayloadId,
+        JsonPayloadAttributes, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
+        TransparentJsonPayloadId,
     },
     NewPayloadRequest, NewPayloadRequestCapella, NewPayloadRequestDeneb, NewPayloadRequestMerge,
 };

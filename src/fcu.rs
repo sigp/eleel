@@ -4,8 +4,8 @@ use crate::{
     multiplexer::Multiplexer,
     types::{
         ErrorResponse, JsonForkchoiceStateV1, JsonForkchoiceUpdatedV1Response,
-        JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, JsonValue, Request, Response, TransparentJsonPayloadId,
+        JsonPayloadAttributes, JsonPayloadStatusV1, JsonPayloadStatusV1Status, JsonValue, Request,
+        Response, TransparentJsonPayloadId,
     },
 };
 use eth2::types::EthSpec;
@@ -22,29 +22,8 @@ impl<E: EthSpec> Multiplexer<E> {
         let head_hash = fcu.head_block_hash;
         tracing::info!(head_hash = ?head_hash, "processing fcU from controller");
 
-        let opt_payload_attributes = if method_name == ENGINE_FORKCHOICE_UPDATED_V2 {
-            json_payload_attributes
-                .map(serde_json::from_value)
-                .transpose()
-                .map_err(|e| {
-                    ErrorResponse::parse_error_generic(
-                        id.clone(),
-                        format!("invalid payload attributes: {e}"),
-                    )
-                })?
-                .map(JsonPayloadAttributes::V2)
-        } else {
-            json_payload_attributes
-                .map(serde_json::from_value)
-                .transpose()
-                .map_err(|e| {
-                    ErrorResponse::parse_error_generic(
-                        id.clone(),
-                        format!("invalid payload attributes: {e}"),
-                    )
-                })?
-                .map(JsonPayloadAttributes::V3)
-        };
+        let opt_payload_attributes =
+            Self::decode_payload_attributes(&id, &method_name, json_payload_attributes)?;
 
         let payload_status = if let Some(status) = self.get_cached_fcu(&fcu, true).await {
             status
@@ -142,8 +121,12 @@ impl<E: EthSpec> Multiplexer<E> {
     }
 
     pub async fn handle_fcu(&self, request: Request) -> Result<Response, ErrorResponse> {
-        let (id, (fcu, opt_payload_attributes)) =
-            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonPayloadAttributesV2>)>()?;
+        let method_name = request.method.clone();
+        let (id, (fcu, json_payload_attributes)) =
+            request.parse_as::<(JsonForkchoiceStateV1, Option<JsonValue>)>()?;
+
+        let opt_payload_attributes =
+            Self::decode_payload_attributes(&id, &method_name, json_payload_attributes)?;
 
         let head_hash = fcu.head_block_hash;
         tracing::info!(id = ?id, head_hash = ?head_hash, "processing fcU from client");
@@ -184,10 +167,7 @@ impl<E: EthSpec> Multiplexer<E> {
         // FIXME: wait for payload attributes from controller?
         let payload_id = if let Some(payload_attributes) = opt_payload_attributes {
             match self
-                .get_existing_payload_id(
-                    head_hash,
-                    JsonPayloadAttributes::V2(payload_attributes).into(),
-                )
+                .get_existing_payload_id(head_hash, payload_attributes.into())
                 .await
             {
                 Ok(payload_id) => Some(TransparentJsonPayloadId(payload_id)),
@@ -206,6 +186,37 @@ impl<E: EthSpec> Multiplexer<E> {
         };
 
         Response::new(id, response)
+    }
+
+    fn decode_payload_attributes(
+        id: &JsonValue,
+        method_name: &str,
+        json_payload_attributes: Option<JsonValue>,
+    ) -> Result<Option<JsonPayloadAttributes>, ErrorResponse> {
+        let opt_payload_attributes = if method_name == ENGINE_FORKCHOICE_UPDATED_V2 {
+            json_payload_attributes
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(|e| {
+                    ErrorResponse::parse_error_generic(
+                        id.clone(),
+                        format!("invalid payload attributes: {e}"),
+                    )
+                })?
+                .map(JsonPayloadAttributes::V2)
+        } else {
+            json_payload_attributes
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(|e| {
+                    ErrorResponse::parse_error_generic(
+                        id.clone(),
+                        format!("invalid payload attributes: {e}"),
+                    )
+                })?
+                .map(JsonPayloadAttributes::V3)
+        };
+        Ok(opt_payload_attributes)
     }
 
     /// Get fcU from cache.
