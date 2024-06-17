@@ -1,0 +1,80 @@
+name: docker
+
+on:
+    push:
+        branches:
+            - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+jobs:
+    build-docker-single-arch:
+        name: build-docker-${{ matrix.cpu_arch }}
+        strategy:
+            matrix:
+                cpu_arch: [aarch64, x86_64]
+        steps:
+            - uses: actions/checkout@v4
+            - name: Update Rust
+              run: rustup update stable
+            - name: Dockerhub login
+              run: |
+                  echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+            - name: Cross build binaries
+              run: |
+                  cargo install cross
+                  make build-${{ matrix.arch }}
+
+            - name: Make bin dir
+              run: mkdir ./bin
+
+            - name: Move cross-built binary into Docker scope
+              run: mv ./target/${{ matrix.cpu_arch }}-unknown-linux-gnu/release/eleel ./bin
+
+            - name: Map aarch64 to arm64 short arch
+              if: startsWith(matrix.cpu_arch, 'aarch64')
+              run: echo "SHORT_ARCH=arm64" >> $GITHUB_ENV
+
+            - name: Map x86_64 to amd64 short arch
+              if: startsWith(matrix.cpu_arch, 'x86_64')
+              run: echo "SHORT_ARCH=amd64" >> $GITHUB_ENV
+
+            - name: Install QEMU
+              run: sudo apt-get update && sudo apt-get install -y qemu-user-static
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build and push
+              uses: docker/build-push-action@v5
+              with:
+                file: ./Dockerfile.cross
+                context: .
+                platforms: linux/${{ env.SHORT_ARCH }}
+                push: true
+                tags: |
+                  ${{ github.repository_owner }}/eleel:latest-${{ env.SHORT_ARCH }}
+
+    build-docker-multiarch:
+        name: build-docker-eleel-multiarch
+        runs-on: ubuntu-22.04
+        needs: [build-docker-single-arch]
+        steps:
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Dockerhub login
+              run: |
+                  echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+
+            - name: Create and push multiarch manifests
+              run: |
+                  docker buildx imagetools create -t ${{ github.repository_owner}}/eleel:latest \
+                      ${{ github.repository_owner}}/eleel:latest-arm64 \
+                      ${{ github.repository_owner}}/eleel:latest-amd64;
