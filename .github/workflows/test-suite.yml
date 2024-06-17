@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: arduino/setup-protoc@e52d9eb8f7b63115df1ac544a1376fdbf5a39612
     - name: Get latest version of stable Rust
       run: rustup update stable
     - name: Check formatting with cargo fmt
@@ -25,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: arduino/setup-protoc@e52d9eb8f7b63115df1ac544a1376fdbf5a39612
     - name: Get latest version of stable Rust
       run: rustup update stable
     - name: Check style with clippy
@@ -38,7 +36,6 @@ jobs:
     name: test-${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    - uses: arduino/setup-protoc@e52d9eb8f7b63115df1ac544a1376fdbf5a39612
     - name: Get latest version of stable Rust
       run: rustup update stable
     - name: Run tests
