@@ -16,6 +16,7 @@ env:
 jobs:
     build-docker-single-arch:
         name: build-docker-${{ matrix.cpu_arch }}
+        runs-on: ubuntu-22.04
         strategy:
             matrix:
                 cpu_arch: [aarch64, x86_64]
@@ -29,7 +30,7 @@ jobs:
             - name: Cross build binaries
               run: |
                   cargo install cross
-                  make build-${{ matrix.arch }}
+                  make build-${{ matrix.cpu_arch }}
 
             - name: Make bin dir
               run: mkdir ./bin
