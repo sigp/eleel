@@ -3,8 +3,8 @@ use crate::{
     multiplexer::{Multiplexer, NewPayloadCacheEntry},
     types::{
         ErrorResponse, JsonExecutionPayload, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
-        JsonValue, NewPayloadRequest, NewPayloadRequestCapella, NewPayloadRequestDeneb,
-        NewPayloadRequestMerge, QuantityU64, Request, Response,
+        JsonValue, NewPayloadRequest, NewPayloadRequestBellatrix, NewPayloadRequestCapella,
+        NewPayloadRequestDeneb, QuantityU64, Request, Response,
     },
 };
 use eth2::types::{
@@ -156,8 +156,8 @@ impl<E: EthSpec> Multiplexer<E> {
         parent_beacon_block_root: Option<Hash256>,
     ) -> NewPayloadRequest<E> {
         match execution_payload {
-            ExecutionPayload::Merge(execution_payload) => {
-                NewPayloadRequest::Merge(NewPayloadRequestMerge { execution_payload })
+            ExecutionPayload::Bellatrix(execution_payload) => {
+                NewPayloadRequest::Bellatrix(NewPayloadRequestBellatrix { execution_payload })
             }
             ExecutionPayload::Capella(execution_payload) => {
                 NewPayloadRequest::Capella(NewPayloadRequestCapella { execution_payload })
@@ -172,6 +172,8 @@ impl<E: EthSpec> Multiplexer<E> {
                     parent_beacon_block_root: parent_beacon_block_root.unwrap_or_default(),
                 })
             }
+            // TODO: Electra
+            ExecutionPayload::Electra(_) => todo!("Electra"),
         }
     }
 
@@ -234,7 +236,7 @@ impl<E: EthSpec> Multiplexer<E> {
 
         let fork_name = self.spec.fork_name_at_slot::<E>(slot);
 
-        let payload = if method == ENGINE_NEW_PAYLOAD_V1 || fork_name == ForkName::Merge {
+        let payload = if method == ENGINE_NEW_PAYLOAD_V1 || fork_name == ForkName::Bellatrix {
             serde_json::from_value(payload_json).map(JsonExecutionPayload::V1)
         } else if method == ENGINE_NEW_PAYLOAD_V2 || fork_name == ForkName::Capella {
             serde_json::from_value(payload_json).map(JsonExecutionPayload::V2)

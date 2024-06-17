@@ -23,7 +23,6 @@ use execution_layer::http::{
     ENGINE_GET_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3,
     ETH_SYNCING,
 };
-use futures::channel::mpsc::channel;
 use slog::Logger;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -90,9 +89,9 @@ struct AppState {
 // TODO: do something with signal/signal_rx
 async fn new_task_executor(log: Logger) -> TaskExecutor {
     let handle = Handle::current();
-    let (_signal, exit) = exit_future::signal();
-    let (signal_tx, _signal_rx) = channel(1);
-    TaskExecutor::new(handle, exit, log, signal_tx)
+    let (_signal, exit) = async_channel::bounded(1);
+    let (shutdown_tx, _) = futures::channel::mpsc::channel(1);
+    TaskExecutor::new(handle, exit, log, shutdown_tx)
 }
 
 async fn handle_client_json_rpc(

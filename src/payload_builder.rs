@@ -8,8 +8,8 @@ use crate::{
     ErrorResponse, Multiplexer, Request, Response,
 };
 use eth2::types::{
-    BlobsBundle, EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadCapella,
-    ExecutionPayloadDeneb, ExecutionPayloadMerge, FixedVector, ForkName, Hash256, Uint256,
+    BlobsBundle, EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadBellatrix,
+    ExecutionPayloadCapella, ExecutionPayloadDeneb, FixedVector, ForkName, Hash256, Uint256,
     Unsigned, VariableList,
 };
 use execution_layer::{calculate_execution_block_hash, PayloadAttributes};
@@ -113,7 +113,7 @@ impl<E: EthSpec> Multiplexer<E> {
         let block_hash = ExecutionBlockHash::zero();
 
         let mut payload = match fork_name {
-            ForkName::Merge => ExecutionPayload::Merge(ExecutionPayloadMerge {
+            ForkName::Bellatrix => ExecutionPayload::Bellatrix(ExecutionPayloadBellatrix {
                 parent_hash,
                 fee_recipient,
                 state_root,
@@ -179,6 +179,8 @@ impl<E: EthSpec> Multiplexer<E> {
                     excess_blob_gas,
                 })
             }
+            // TODO: support Electra
+            ForkName::Electra => todo!(),
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
 
@@ -280,6 +282,10 @@ impl<E: EthSpec> Multiplexer<E> {
                         should_override_builder,
                     },
                 )
+            }
+            // TODO: Electra support
+            JsonExecutionPayload::V4(_) => {
+                todo!("Electra")
             }
         }
     }

@@ -12,7 +12,8 @@ pub use execution_layer::{
         JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
         JsonPayloadStatusV1Status, TransparentJsonPayloadId,
     },
-    NewPayloadRequest, NewPayloadRequestCapella, NewPayloadRequestDeneb, NewPayloadRequestMerge,
+    NewPayloadRequest, NewPayloadRequestBellatrix, NewPayloadRequestCapella,
+    NewPayloadRequestDeneb,
 };
 pub use serde_json::Value as JsonValue;
 pub use task_executor::TaskExecutor;
