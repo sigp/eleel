@@ -152,7 +152,8 @@ async fn process_client_request(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
-        "eth_getBlockByNumber"
+        "engine_getBlobsV1"
+        | "eth_getBlockByNumber"
         | "eth_getBlockByHash"
         | "eth_getLogs"
         | "eth_call"
@@ -199,7 +200,8 @@ async fn handle_controller_json_rpc(
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
-        "eth_getBlockByNumber"
+        "engine_getBlobsV1"
+        | "eth_getBlockByNumber"
         | "eth_getBlockByHash"
         | "eth_getLogs"
         | "eth_call"
