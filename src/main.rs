@@ -18,10 +18,10 @@ use clap::Parser;
 use eth2::types::MainnetEthSpec;
 use execution_layer::http::{
     ENGINE_EXCHANGE_CAPABILITIES, ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2,
-    ENGINE_FORKCHOICE_UPDATED_V3, ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1,
-    ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1, ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2,
-    ENGINE_GET_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3,
-    ETH_SYNCING,
+    ENGINE_FORKCHOICE_UPDATED_V3, ENGINE_GET_CLIENT_VERSION_V1,
+    ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1, ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1,
+    ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2, ENGINE_GET_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V1,
+    ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3, ETH_SYNCING,
 };
 use slog::Logger;
 use std::net::SocketAddr;
@@ -159,7 +159,8 @@ async fn process_client_request(
         | "eth_call"
         | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
-        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
+        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1
+        | ENGINE_GET_CLIENT_VERSION_V1 => multiplexer.proxy_directly(request).await,
         ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
             multiplexer.handle_get_payload(request).await
         }
@@ -207,7 +208,8 @@ async fn handle_controller_json_rpc(
         | "eth_call"
         | "eth_blockNumber"
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
-        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1 => multiplexer.proxy_directly(request).await,
+        | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1
+        | ENGINE_GET_CLIENT_VERSION_V1 => multiplexer.proxy_directly(request).await,
         ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
             multiplexer.handle_get_payload(request).await
         }
