@@ -20,17 +20,17 @@ pub fn expected_base_fee_per_gas(
     } else if parent_gas_used > parent_gas_target {
         let gas_used_delta = parent_gas_used.saturating_sub(parent_gas_target);
         let base_fee_per_gas_delta = max(
-            parent_base_fee_per_gas * gas_used_delta
-                / parent_gas_target
-                / BASE_FEE_MAX_CHANGE_DENOMINATOR,
-            Uint256::one(),
+            parent_base_fee_per_gas * Uint256::from(gas_used_delta)
+                / Uint256::from(parent_gas_target)
+                / Uint256::from(BASE_FEE_MAX_CHANGE_DENOMINATOR),
+            Uint256::from(1u64),
         );
         parent_base_fee_per_gas + base_fee_per_gas_delta
     } else {
         let gas_used_delta = parent_gas_target.saturating_sub(parent_gas_used);
-        let base_fee_per_gas_delta = parent_base_fee_per_gas * gas_used_delta
-            / parent_gas_target
-            / BASE_FEE_MAX_CHANGE_DENOMINATOR;
+        let base_fee_per_gas_delta = parent_base_fee_per_gas * Uint256::from(gas_used_delta)
+            / Uint256::from(parent_gas_target)
+            / Uint256::from(BASE_FEE_MAX_CHANGE_DENOMINATOR);
         parent_base_fee_per_gas.saturating_sub(base_fee_per_gas_delta)
     }
 }

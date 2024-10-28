@@ -254,7 +254,7 @@ impl<E: EthSpec> Multiplexer<E> {
             Err(message) => return Err(ErrorResponse::unknown_payload(id, message)),
         };
         let json_payload = JsonExecutionPayload::from(payload);
-        let block_value = Uint256::zero();
+        let block_value = Uint256::ZERO;
         match json_payload {
             JsonExecutionPayload::V1(execution_payload) => Response::new(
                 id,
