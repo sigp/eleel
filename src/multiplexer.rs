@@ -79,6 +79,7 @@ impl<E: EthSpec> Multiplexer<E> {
             bellatrix_fork_epoch = ?spec.bellatrix_fork_epoch,
             capella_fork_epoch = ?spec.capella_fork_epoch,
             deneb_fork_epoch = ?spec.deneb_fork_epoch,
+            electra_fork_epoch = ?spec.electra_fork_epoch,
             "fork schedule"
         );
         let genesis_state_timeout = Duration::from_secs(180);

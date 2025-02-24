@@ -207,7 +207,7 @@ impl<E: EthSpec> Multiplexer<E> {
             }
             // TODO: Fulu
             ForkName::Fulu => {
-                return Err(format!("Fulu not supported"));
+                return Err("Fulu not supported".to_string());
             }
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
