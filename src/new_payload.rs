@@ -2,15 +2,19 @@
 use crate::{
     multiplexer::{Multiplexer, NewPayloadCacheEntry},
     types::{
-        ErrorResponse, JsonExecutionPayload, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
-        JsonValue, NewPayloadRequest, NewPayloadRequestBellatrix, NewPayloadRequestCapella,
-        NewPayloadRequestDeneb, QuantityU64, Request, Response,
+        ErrorResponse, JsonExecutionPayload, JsonExecutionRequests, JsonPayloadStatusV1,
+        JsonPayloadStatusV1Status, JsonValue, NewPayloadRequest, NewPayloadRequestBellatrix,
+        NewPayloadRequestCapella, NewPayloadRequestDeneb, NewPayloadRequestElectra, QuantityU64,
+        Request, Response,
     },
 };
 use eth2::types::{
-    EthSpec, ExecutionBlockHash, ExecutionPayload, ForkName, Hash256, Slot, VersionedHash,
+    EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionRequests, ForkName, Hash256, Slot,
+    VersionedHash,
 };
-use execution_layer::http::{ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3};
+use execution_layer::http::{
+    ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V4,
+};
 use std::time::{Duration, Instant};
 
 impl<E: EthSpec> Multiplexer<E> {
@@ -20,8 +24,13 @@ impl<E: EthSpec> Multiplexer<E> {
     ) -> Result<Response, ErrorResponse> {
         let method = request.method.clone();
         tracing::info!(method = method, "processing payload from controller");
-        let (id, json_execution_payload, versioned_hashes, parent_beacon_block_root) =
-            self.decode_new_payload(request)?;
+        let (
+            id,
+            json_execution_payload,
+            versioned_hashes,
+            parent_beacon_block_root,
+            execution_requests,
+        ) = self.decode_new_payload(request)?;
 
         let execution_payload = ExecutionPayload::from(json_execution_payload);
         let block_hash = execution_payload.block_hash();
@@ -30,6 +39,7 @@ impl<E: EthSpec> Multiplexer<E> {
             &execution_payload,
             versioned_hashes,
             parent_beacon_block_root,
+            execution_requests.as_ref(),
         );
         let status = if let Some(status) = self.get_cached_payload_status(&block_hash, true).await {
             status
@@ -71,8 +81,13 @@ impl<E: EthSpec> Multiplexer<E> {
 
     pub async fn handle_new_payload(&self, request: Request) -> Result<Response, ErrorResponse> {
         tracing::info!("processing new payload from client");
-        let (id, json_execution_payload, versioned_hashes, parent_block_root) =
-            self.decode_new_payload(request)?;
+        let (
+            id,
+            json_execution_payload,
+            versioned_hashes,
+            parent_beacon_block_root,
+            execution_requests,
+        ) = self.decode_new_payload(request)?;
 
         let execution_payload = ExecutionPayload::from(json_execution_payload);
         let block_hash = execution_payload.block_hash();
@@ -80,7 +95,8 @@ impl<E: EthSpec> Multiplexer<E> {
         let new_payload_request = Self::new_payload_request_from_parts(
             &execution_payload,
             versioned_hashes,
-            parent_block_root,
+            parent_beacon_block_root,
+            execution_requests.as_ref(),
         );
 
         // Check block hash prior to keying cache. This prevents responding with an incorrect
@@ -150,11 +166,12 @@ impl<E: EthSpec> Multiplexer<E> {
         Response::new(id, status)
     }
 
-    fn new_payload_request_from_parts(
-        execution_payload: &ExecutionPayload<E>,
+    fn new_payload_request_from_parts<'a>(
+        execution_payload: &'a ExecutionPayload<E>,
         versioned_hashes: Option<Vec<VersionedHash>>,
         parent_beacon_block_root: Option<Hash256>,
-    ) -> NewPayloadRequest<E> {
+        execution_requests: Option<&'a ExecutionRequests<E>>,
+    ) -> NewPayloadRequest<'a, E> {
         match execution_payload {
             ExecutionPayload::Bellatrix(execution_payload) => {
                 NewPayloadRequest::Bellatrix(NewPayloadRequestBellatrix { execution_payload })
@@ -162,7 +179,7 @@ impl<E: EthSpec> Multiplexer<E> {
             ExecutionPayload::Capella(execution_payload) => {
                 NewPayloadRequest::Capella(NewPayloadRequestCapella { execution_payload })
             }
-            // The `versioned_hashes` and `parent_block_root` should also be populated post-Deneb.
+            // The `versioned_hashes` and `parent_beacon_block_root` should also be populated post-Deneb.
             // We could error here, but we defer to `verify_payload_block_hash` and similar, or
             // the actual EL to do that validation.
             ExecutionPayload::Deneb(execution_payload) => {
@@ -172,8 +189,19 @@ impl<E: EthSpec> Multiplexer<E> {
                     parent_beacon_block_root: parent_beacon_block_root.unwrap_or_default(),
                 })
             }
-            // TODO: Electra
-            ExecutionPayload::Electra(_) => todo!("Electra"),
+            ExecutionPayload::Electra(execution_payload) => {
+                // TODO(Electra): error handling would probably be good here
+                let execution_requests = execution_requests.unwrap();
+                NewPayloadRequest::Electra(NewPayloadRequestElectra {
+                    execution_payload,
+                    versioned_hashes: versioned_hashes.unwrap_or_default(),
+                    parent_beacon_block_root: parent_beacon_block_root.unwrap_or_default(),
+                    execution_requests,
+                })
+            }
+            ExecutionPayload::Fulu(_) => {
+                todo!("Fulu")
+            }
         }
     }
 
@@ -187,6 +215,7 @@ impl<E: EthSpec> Multiplexer<E> {
             JsonExecutionPayload<E>,
             Option<Vec<VersionedHash>>,
             Option<Hash256>,
+            Option<ExecutionRequests<E>>,
         ),
         ErrorResponse,
     > {
@@ -194,26 +223,52 @@ impl<E: EthSpec> Multiplexer<E> {
 
         let (id, params) = request.parse_as::<Vec<JsonValue>>()?;
 
-        let (versioned_hashes, parent_block_root) = if method == ENGINE_NEW_PAYLOAD_V3 {
-            if params.len() != 3 {
+        let (versioned_hashes, parent_beacon_block_root, execution_requests) =
+            if method == ENGINE_NEW_PAYLOAD_V4 {
+                if params.len() != 4 {
+                    return Err(ErrorResponse::parse_error_generic(
+                        id,
+                        "wrong number of parameters for newPayloadV3".to_string(),
+                    ));
+                }
+                let versioned_hashes = serde_json::from_value(params[1].clone())
+                    .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+                let parent_beacon_block_root = serde_json::from_value(params[2].clone())
+                    .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+                let json_execution_requests: JsonExecutionRequests =
+                    serde_json::from_value(params[3].clone())
+                        .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+                let execution_requests = json_execution_requests.try_into().map_err(|e| {
+                    ErrorResponse::parse_error_generic(
+                        id.clone(),
+                        format!("invalid execution requests: {e:?}"),
+                    )
+                })?;
+                (
+                    Some(versioned_hashes),
+                    Some(parent_beacon_block_root),
+                    Some(execution_requests),
+                )
+            } else if method == ENGINE_NEW_PAYLOAD_V3 {
+                if params.len() != 3 {
+                    return Err(ErrorResponse::parse_error_generic(
+                        id,
+                        "wrong number of parameters for newPayloadV3".to_string(),
+                    ));
+                }
+                let versioned_hashes = serde_json::from_value(params[1].clone())
+                    .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+                let parent_beacon_block_root = serde_json::from_value(params[2].clone())
+                    .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
+                (Some(versioned_hashes), Some(parent_beacon_block_root), None)
+            } else if params.len() == 1 {
+                (None, None, None)
+            } else {
                 return Err(ErrorResponse::parse_error_generic(
                     id,
-                    "wrong number of parameters for newPayloadV3".to_string(),
+                    format!("wrong number of parameters for {method}: {}", params.len()),
                 ));
-            }
-            let versioned_hashes = serde_json::from_value(params[1].clone())
-                .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
-            let parent_block_root = serde_json::from_value(params[2].clone())
-                .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
-            (Some(versioned_hashes), Some(parent_block_root))
-        } else if params.len() == 1 {
-            (None, None)
-        } else {
-            return Err(ErrorResponse::parse_error_generic(
-                id,
-                format!("wrong number of parameters for {method}: {}", params.len()),
-            ));
-        };
+            };
 
         let payload_json = params[0].clone();
         let QuantityU64 { value: timestamp } =
@@ -236,16 +291,25 @@ impl<E: EthSpec> Multiplexer<E> {
 
         let fork_name = self.spec.fork_name_at_slot::<E>(slot);
 
+        // TODO: Fulu
         let payload = if method == ENGINE_NEW_PAYLOAD_V1 || fork_name == ForkName::Bellatrix {
             serde_json::from_value(payload_json).map(JsonExecutionPayload::V1)
         } else if method == ENGINE_NEW_PAYLOAD_V2 || fork_name == ForkName::Capella {
             serde_json::from_value(payload_json).map(JsonExecutionPayload::V2)
-        } else {
+        } else if method == ENGINE_NEW_PAYLOAD_V3 || fork_name == ForkName::Deneb {
             serde_json::from_value(payload_json).map(JsonExecutionPayload::V3)
+        } else {
+            serde_json::from_value(payload_json).map(JsonExecutionPayload::V4)
         }
         .map_err(|e| ErrorResponse::parse_error(id.clone(), e))?;
 
-        Ok((id, payload, versioned_hashes, parent_block_root))
+        Ok((
+            id,
+            payload,
+            versioned_hashes,
+            parent_beacon_block_root,
+            execution_requests,
+        ))
     }
 
     pub fn timestamp_to_slot(&self, timestamp: u64) -> Option<Slot> {

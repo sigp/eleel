@@ -2,15 +2,15 @@ use crate::{
     base_fee::expected_base_fee_per_gas,
     types::{
         JsonBlobsBundleV1, JsonExecutionPayload, JsonGetPayloadResponseV1,
-        JsonGetPayloadResponseV2, JsonGetPayloadResponseV3, JsonPayloadStatusV1Status, PayloadId,
-        TransparentJsonPayloadId,
+        JsonGetPayloadResponseV2, JsonGetPayloadResponseV3, JsonGetPayloadResponseV4,
+        JsonPayloadStatusV1Status, PayloadId, TransparentJsonPayloadId,
     },
     ErrorResponse, Multiplexer, Request, Response,
 };
 use eth2::types::{
     BlobsBundle, EthSpec, ExecutionBlockHash, ExecutionPayload, ExecutionPayloadBellatrix,
-    ExecutionPayloadCapella, ExecutionPayloadDeneb, FixedVector, ForkName, Hash256, Uint256,
-    Unsigned, VariableList,
+    ExecutionPayloadCapella, ExecutionPayloadDeneb, ExecutionPayloadElectra, FixedVector, ForkName,
+    Hash256, Uint256, Unsigned, VariableList,
 };
 use execution_layer::{calculate_execution_block_hash, PayloadAttributes};
 use lru::LruCache;
@@ -179,13 +179,54 @@ impl<E: EthSpec> Multiplexer<E> {
                     excess_blob_gas,
                 })
             }
-            // TODO: support Electra
-            ForkName::Electra => todo!(),
+            ForkName::Electra => {
+                let withdrawals = payload_attributes
+                    .withdrawals()
+                    .map_err(|_| "no withdrawals".to_string())?
+                    .clone()
+                    .into();
+                ExecutionPayload::Electra(ExecutionPayloadElectra {
+                    parent_hash,
+                    fee_recipient,
+                    state_root,
+                    receipts_root,
+                    logs_bloom,
+                    prev_randao,
+                    block_number,
+                    gas_limit,
+                    gas_used,
+                    timestamp,
+                    extra_data,
+                    base_fee_per_gas,
+                    block_hash,
+                    transactions,
+                    withdrawals,
+                    blob_gas_used,
+                    excess_blob_gas,
+                })
+            }
+            // TODO: Fulu
+            ForkName::Fulu => {
+                return Err(format!("Fulu not supported"));
+            }
             ForkName::Base | ForkName::Altair => return Err(format!("invalid fork: {fork_name}")),
         };
+        let execution_requests = match fork_name {
+            ForkName::Base
+            | ForkName::Altair
+            | ForkName::Bellatrix
+            | ForkName::Capella
+            | ForkName::Deneb => None,
+            ForkName::Electra => Some(Default::default()),
+            // TODO: Fulu
+            ForkName::Fulu => None,
+        };
 
-        let (block_hash, _) =
-            calculate_execution_block_hash(payload.to_ref(), parent_beacon_block_root);
+        let (block_hash, _) = calculate_execution_block_hash(
+            payload.to_ref(),
+            parent_beacon_block_root,
+            execution_requests.as_ref(),
+        );
         *payload.block_hash_mut() = block_hash;
 
         builder.payload_attributes.put(attributes_key, id);
@@ -283,9 +324,24 @@ impl<E: EthSpec> Multiplexer<E> {
                     },
                 )
             }
-            // TODO: Electra support
-            JsonExecutionPayload::V4(_) => {
-                todo!("Electra")
+            JsonExecutionPayload::V4(execution_payload) => {
+                let blobs_bundle = JsonBlobsBundleV1::from(BlobsBundle::default());
+                let should_override_builder = false;
+                let execution_requests = Default::default();
+                Response::new(
+                    id,
+                    JsonGetPayloadResponseV4 {
+                        execution_payload,
+                        block_value,
+                        blobs_bundle,
+                        should_override_builder,
+                        execution_requests,
+                    },
+                )
+            }
+            // TODO: Fulu
+            JsonExecutionPayload::V5(_) => {
+                panic!("Fulu not supported")
             }
         }
     }

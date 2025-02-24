@@ -7,13 +7,14 @@ pub use execution_layer::{
     auth::Auth,
     engines::Engine,
     json_structures::{
-        JsonBlobsBundleV1, JsonExecutionPayload, JsonForkchoiceUpdatedV1Response,
-        JsonGetPayloadResponseV1, JsonGetPayloadResponseV2, JsonGetPayloadResponseV3,
-        JsonPayloadAttributes, JsonPayloadAttributesV2, JsonPayloadStatusV1,
-        JsonPayloadStatusV1Status, TransparentJsonPayloadId,
+        JsonBlobsBundleV1, JsonExecutionPayload, JsonExecutionRequests,
+        JsonForkchoiceUpdatedV1Response, JsonGetPayloadResponseV1, JsonGetPayloadResponseV2,
+        JsonGetPayloadResponseV3, JsonGetPayloadResponseV4, JsonPayloadAttributes,
+        JsonPayloadAttributesV2, JsonPayloadStatusV1, JsonPayloadStatusV1Status,
+        TransparentJsonPayloadId,
     },
     NewPayloadRequest, NewPayloadRequestBellatrix, NewPayloadRequestCapella,
-    NewPayloadRequestDeneb,
+    NewPayloadRequestDeneb, NewPayloadRequestElectra,
 };
 pub use serde_json::Value as JsonValue;
 pub use task_executor::TaskExecutor;
