@@ -20,8 +20,9 @@ use execution_layer::http::{
     ENGINE_EXCHANGE_CAPABILITIES, ENGINE_FORKCHOICE_UPDATED_V1, ENGINE_FORKCHOICE_UPDATED_V2,
     ENGINE_FORKCHOICE_UPDATED_V3, ENGINE_GET_CLIENT_VERSION_V1,
     ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1, ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1,
-    ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2, ENGINE_GET_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V1,
-    ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3, ETH_SYNCING,
+    ENGINE_GET_PAYLOAD_V1, ENGINE_GET_PAYLOAD_V2, ENGINE_GET_PAYLOAD_V3, ENGINE_GET_PAYLOAD_V4,
+    ENGINE_NEW_PAYLOAD_V1, ENGINE_NEW_PAYLOAD_V2, ENGINE_NEW_PAYLOAD_V3, ENGINE_NEW_PAYLOAD_V4,
+    ETH_SYNCING,
 };
 use slog::Logger;
 use std::net::SocketAddr;
@@ -146,9 +147,10 @@ async fn process_client_request(
         ENGINE_FORKCHOICE_UPDATED_V1
         | ENGINE_FORKCHOICE_UPDATED_V2
         | ENGINE_FORKCHOICE_UPDATED_V3 => multiplexer.handle_fcu(request).await,
-        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 | ENGINE_NEW_PAYLOAD_V3 => {
-            multiplexer.handle_new_payload(request).await
-        }
+        ENGINE_NEW_PAYLOAD_V1
+        | ENGINE_NEW_PAYLOAD_V2
+        | ENGINE_NEW_PAYLOAD_V3
+        | ENGINE_NEW_PAYLOAD_V4 => multiplexer.handle_new_payload(request).await,
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
@@ -161,9 +163,10 @@ async fn process_client_request(
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1
         | ENGINE_GET_CLIENT_VERSION_V1 => multiplexer.proxy_directly(request).await,
-        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
-            multiplexer.handle_get_payload(request).await
-        }
+        ENGINE_GET_PAYLOAD_V1
+        | ENGINE_GET_PAYLOAD_V2
+        | ENGINE_GET_PAYLOAD_V3
+        | ENGINE_GET_PAYLOAD_V4 => multiplexer.handle_get_payload(request).await,
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }
 }
@@ -195,9 +198,10 @@ async fn handle_controller_json_rpc(
         ENGINE_FORKCHOICE_UPDATED_V1
         | ENGINE_FORKCHOICE_UPDATED_V2
         | ENGINE_FORKCHOICE_UPDATED_V3 => multiplexer.handle_controller_fcu(request).await,
-        ENGINE_NEW_PAYLOAD_V1 | ENGINE_NEW_PAYLOAD_V2 | ENGINE_NEW_PAYLOAD_V3 => {
-            multiplexer.handle_controller_new_payload(request).await
-        }
+        ENGINE_NEW_PAYLOAD_V1
+        | ENGINE_NEW_PAYLOAD_V2
+        | ENGINE_NEW_PAYLOAD_V3
+        | ENGINE_NEW_PAYLOAD_V4 => multiplexer.handle_controller_new_payload(request).await,
         ETH_SYNCING => multiplexer.handle_syncing(request).await,
         "eth_chainId" => multiplexer.handle_chain_id(request).await,
         ENGINE_EXCHANGE_CAPABILITIES => multiplexer.handle_engine_capabilities(request).await,
@@ -210,9 +214,10 @@ async fn handle_controller_json_rpc(
         | ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1
         | ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1
         | ENGINE_GET_CLIENT_VERSION_V1 => multiplexer.proxy_directly(request).await,
-        ENGINE_GET_PAYLOAD_V1 | ENGINE_GET_PAYLOAD_V2 | ENGINE_GET_PAYLOAD_V3 => {
-            multiplexer.handle_get_payload(request).await
-        }
+        ENGINE_GET_PAYLOAD_V1
+        | ENGINE_GET_PAYLOAD_V2
+        | ENGINE_GET_PAYLOAD_V3
+        | ENGINE_GET_PAYLOAD_V4 => multiplexer.handle_get_payload(request).await,
         method => Err(ErrorResponse::unsupported_method(request.id, method)),
     }
     .map(Json)
