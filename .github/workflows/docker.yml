@@ -20,8 +20,9 @@ jobs:
         name: build-docker-${{ matrix.cpu_arch }}
         runs-on: ubuntu-22.04
         strategy:
-            matrix:
-                cpu_arch: [aarch64, x86_64]
+          fail-fast: false
+          matrix:
+            cpu_arch: [aarch64, x86_64]
         steps:
             - name: debug docker username
               run: echo ${{ env.DOCKER_USERNAME }}
@@ -38,6 +39,7 @@ jobs:
               run: |
                   cargo install cross
                   make build-${{ matrix.cpu_arch }}
+              timeout-minutes: 100
 
             - name: Make bin dir
               run: mkdir ./bin
