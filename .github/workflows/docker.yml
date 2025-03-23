@@ -23,6 +23,9 @@ jobs:
             matrix:
                 cpu_arch: [aarch64, x86_64]
         steps:
+            - name: debug docker username
+              run: echo ${{ secrets.DOCKER_USERNAME }}
+
             - uses: actions/checkout@v4
             - name: Update Rust
               run: rustup update stable
