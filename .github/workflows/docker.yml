@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
             - name: Login to DockerHub
               uses: docker/login-action@v3
               with:
-                username: ${{ vars.DOCKERHUB_USERNAME }}
+                username: ${{ secrets.DOCKERHUB_USERNAME }}
                 password: ${{ secrets.DOCKERHUB_TOKEN }}
             - name: Cross build binaries
               run: |
