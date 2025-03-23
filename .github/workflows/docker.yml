@@ -1,9 +1,11 @@
 name: docker
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+    - main
+    - stable
+    - unstable
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
