@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-    DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
               run: mkdir ./bin
 
             - name: Move cross-built binary into Docker scope
-              run: mv ./target/${{ matrix.cpu_arch }}-unknown-linux-gnu/release/eleel ./bin
+              run: mv ./target/${{ matrix.cpu_arch }}-unknown-linux-gnu/release/eleel ./bin/eleel
 
             - name: Map aarch64 to arm64 short arch
               if: startsWith(matrix.cpu_arch, 'aarch64')
