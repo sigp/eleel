@@ -4,6 +4,7 @@ variable "ARCH" {
 
 group "default" {
   targets = ["binary"]
+  platforms = ["linux/amd64", "linux/arm64"]
   context = "."
   attest = [
     "type=provenance,mode=max",
@@ -19,7 +20,7 @@ target "binary" {
 
 target "manifest" {
   inherits = ["binary"]
-  platforms = ["linux/${ARCH}"]
+  # platforms = ["linux/${ARCH}"]
   output = ["type=registry"]
   description = "Eleel is a multiplexer for Ethereum execution clients. It allows multiple consensus clients to connect to a single execution client."
 }
