@@ -70,5 +70,6 @@ jobs:
                 set: |
                   *.context=.
                   *.platform=linux/${{ env.SHORT_ARCH }}
-                  ARCH=${{ env.SHORT_ARCH }}
                   *.tags=${{ github.repository_owner }}/eleel:${{ github.ref_name }}
+              env:
+                  ARCH: ${{ env.SHORT_ARCH }}
