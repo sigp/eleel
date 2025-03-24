@@ -2,9 +2,16 @@ variable "ARCH" {
   default = "amd64"
 }
 
+variable "GITHUB_REPO" {
+    default = "https://github.com/sigp/eleel"
+}
+
 group "default" {
   targets = ["binary"]
   platforms = ["linux/amd64", "linux/arm64"]
+  labels = {
+    "org.opencontainers.image.source" = "{GITHUB_REPO}"
+  }
   context = "."
   attest = [
     "type=provenance,mode=max",

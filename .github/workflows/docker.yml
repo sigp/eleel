@@ -73,3 +73,5 @@ jobs:
                   *.tags=${{ github.repository_owner }}/eleel:${{ github.ref_name }}
               env:
                   ARCH: ${{ env.SHORT_ARCH }}
+                  GITHUB_REPO: ${{ github.repository_owner }}/${{ github.repository_name }}
+                  DOCKER_BUILD_RECORD_UPLOAD: true
