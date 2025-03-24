@@ -1,5 +1,6 @@
 group "default" {
   targets = ["binary"]
+  context = "."
 }
 
 target "binary" {

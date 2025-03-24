@@ -35,6 +35,7 @@ jobs:
               with:
                 username: ${{ env.DOCKER_USERNAME }}
                 password: ${{ env.DOCKER_PASSWORD }}
+
             - name: Cross build binaries
               run: |
                   cargo install cross
@@ -86,6 +87,7 @@ jobs:
               uses: docker/bake-action@v6
               with:
                 files: ./docker-bake.hcl
+                context: .
                 push: true
                 targets: manifest
                 set: |
