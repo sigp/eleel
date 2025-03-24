@@ -23,7 +23,8 @@ jobs:
         strategy:
           fail-fast: false
           matrix:
-            cpu_arch: [aarch64, x86_64]
+            # cpu_arch: [aarch64, x86_64]
+            cpu_arch: [x86_64]
         steps:
 
             - uses: actions/checkout@v4
@@ -52,7 +53,7 @@ jobs:
               run: echo "SHORT_ARCH=arm64" >> $GITHUB_ENV
 
             - name: Map x86_64 to amd64 short arch
-              if: startsWith(matrix.cpu_arch, 'x86_64')
+              if: ${{ matrix.cpu_arch == 'x86_64' }}
               run: echo "SHORT_ARCH=amd64" >> $GITHUB_ENV
 
             - name: Install QEMU
