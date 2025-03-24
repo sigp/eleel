@@ -68,6 +68,10 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
 
+            - name: Debug Docker build context
+              run: tar -tf <(tar -cf - .) | grep bin/eleel || echo "eleel binary is missing in the context"
+            
+
             - name: Build and push using Bake
               uses: docker/bake-action@v6
               with:
