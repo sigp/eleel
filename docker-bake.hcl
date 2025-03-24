@@ -6,7 +6,6 @@ group "default" {
 target "binary" {
   dockerfile = "Dockerfile.cross"
   context = "."
-  name = "Eleel"
   description = "Eleel is a multiplexer for Ethereum execution clients. It allows multiple consensus clients to connect to a single execution client."
 }
 
