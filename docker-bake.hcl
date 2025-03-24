@@ -5,6 +5,10 @@ variable "ARCH" {
 group "default" {
   targets = ["binary"]
   context = "."
+  attest = [
+    "type=provenance,mode=max",
+    "type=sbom",
+  ]
 }
 
 target "binary" {
