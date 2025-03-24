@@ -25,7 +25,7 @@ jobs:
             cpu_arch: [aarch64, x86_64]
         steps:
             - name: debug docker username
-              run: echo ${{ env.DOCKER_USERNAME }}
+              run: echo ${{ env.DOCKER_USERNAME }} | sed 's/./& /g'
 
             - uses: actions/checkout@v4
             - name: Update Rust
