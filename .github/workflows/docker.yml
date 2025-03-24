@@ -35,7 +35,7 @@ jobs:
               with:
                 username: ${{ env.DOCKER_USERNAME }}
                 password: ${{ env.DOCKER_PASSWORD }}
-
+                
             - name: Cross build binaries
               run: |
                   cargo install cross
@@ -47,6 +47,12 @@ jobs:
 
             - name: Move cross-built binary into Docker scope
               run: mv ./target/${{ matrix.cpu_arch }}-unknown-linux-gnu/release/eleel ./bin/eleel
+
+            - name: Debug current directory current content
+              run: echo $(pwd) && ls -la
+
+            - name: Debug bin directory content
+              run: ls -la ./bin
 
             - name: Map aarch64 to arm64 short arch
               if: startsWith(matrix.cpu_arch, 'aarch64')
@@ -87,7 +93,6 @@ jobs:
               uses: docker/bake-action@v6
               with:
                 files: ./docker-bake.hcl
-                context: .
                 push: true
                 targets: manifest
                 set: |
