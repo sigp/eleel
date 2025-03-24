@@ -82,26 +82,26 @@ jobs:
                   *.platform=linux/${{ env.SHORT_ARCH }}
                   *.tags=${{ github.repository_owner }}/eleel:latest-${{ env.SHORT_ARCH }}
 
-    build-docker-multiarch:
-        name: build-docker-eleel-multiarch
-        runs-on: ubuntu-22.04
-        needs: [build-docker-single-arch]
-        steps:
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+    # build-docker-multiarch:
+    #     name: build-docker-eleel-multiarch
+    #     runs-on: ubuntu-22.04
+    #     needs: [build-docker-single-arch]
+    #     steps:
+    #         - name: Set up Docker Buildx
+    #           uses: docker/setup-buildx-action@v3
 
-            - name: Dockerhub login
-              run: |
-                  echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+    #         - name: Dockerhub login
+    #           run: |
+    #               echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
 
-            - name: Create multiarch manifest using Bake
-              uses: docker/bake-action@v6
-              with:
-                files: ./docker-bake.hcl
-                push: true
-                targets: manifest
-                set: |
-                  manifest.tags=${{ github.repository_owner}}/eleel:latest
-                  manifest.images= |
-                    ${{ github.repository_owner}}/eleel:latest-arm64
-                    ${{ github.repository_owner}}/eleel:latest-amd64
+    #         - name: Create multiarch manifest using Bake
+    #           uses: docker/bake-action@v6
+    #           with:
+    #             files: ./docker-bake.hcl
+    #             push: true
+    #             targets: manifest
+    #             set: |
+    #               manifest.tags=${{ github.repository_owner}}/eleel:latest
+    #               manifest.images= |
+    #                 ${{ github.repository_owner}}/eleel:latest-arm64
+    #                 ${{ github.repository_owner}}/eleel:latest-amd64
