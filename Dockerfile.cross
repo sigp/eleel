@@ -7,4 +7,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
-COPY ./bin/eleel /usr/local/bin/eleel
+ADD ./bin/eleel /usr/local/bin/eleel

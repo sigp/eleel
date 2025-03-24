@@ -74,6 +74,7 @@ jobs:
                 files: ./docker-bake.hcl
                 push: true
                 set: |
+                  *.context=.
                   *.platform=linux/${{ env.SHORT_ARCH }}
                   *.tags=${{ github.repository_owner }}/eleel:latest-${{ env.SHORT_ARCH }}
 
