@@ -94,5 +94,5 @@ jobs:
                 password: ${{ env.DOCKER_PASSWORD }}
             - name: Create and push multiarch manifest
               run: |
-                docker buildx imagetools create -t ${{ env.IMAGE_NAME }}
+                docker buildx imagetools create -t ${{ env.IMAGE_NAME }} --append --debug
                   
