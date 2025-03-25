@@ -69,7 +69,7 @@ jobs:
                 push: false
                 set: |
                   *.context=.
-                  *.tags=${{ github.repository_owner }}/${{ github.repository_name }}:${{ github.ref_name }}
+                  *.tags=${{ github.repository_owner }}/eleel:${{ github.ref_name }}
               env:
                   ARCH: ${{ env.SHORT_ARCH }}
                   GITHUB_REPO: ${{ github.repository_owner }}/${{ github.repository_name }}
