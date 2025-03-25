@@ -19,7 +19,9 @@ env:
   REPO_NAME: $GITHUB_REPOSITORY
 
 jobs:
-    build-docker-single-arch:
+  extract-version:
+        uses: ./.github/workflows/extract-version.yml
+  build-docker:
         name: build-docker
         runs-on: ubuntu-22.04
         strategy:
@@ -69,3 +71,21 @@ jobs:
               ARCH: ${{ env.SHORT_ARCH }}
               GITHUB_REPO: ${{ github.repository }}
               DOCKER_BUILD_RECORD_UPLOAD: true
+  docker-multiarch-manifest:
+          name: docker-multiarch-manifest
+          runs-on: ubuntu-24.04
+          needs: [build-docker, extract-version]
+          env:
+            # We need to enable experimental docker features in order to use `docker manifest`
+            DOCKER_CLI_EXPERIMENTAL: enabled
+            VERSION: ${{ needs.extract-version.outputs.VERSION }}
+            VERSION_SUFFIX: ${{ needs.extract-version.outputs.VERSION_SUFFIX }}
+          steps:
+            - name: Dockerhub login
+              run: |
+                echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+            - name: Create and push multiarch manifest
+              run: |
+                docker buildx imagetools create -t ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX} \
+                  ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-amd64; 
+                  ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-arm64;
