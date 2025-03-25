@@ -8,10 +8,7 @@ group "default" {
     "org.opencontainers.image.source" = "{GITHUB_REPO}"
   }
   context = "."
-  attest = [
-    "type=provenance,mode=max",
-    "type=sbom",
-  ]
+
 }
 
 target "binary-amd64" {
