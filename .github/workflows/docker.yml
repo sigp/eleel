@@ -72,7 +72,7 @@ jobs:
               load: true # <--- Ensure the image is loaded into the local Docker daemon
               set: |
                 *.context=.
-                *.tags=${{ env.IMAGE_NAME }}:${{ env.VERSION }}${{ env.VERSION_SUFFIX}}
+                *.tags=${{ env.IMAGE_NAME }}
             env:
               ARCH: ${{ env.SHORT_ARCH }}
               GITHUB_REPO: ${{ github.repository }}
