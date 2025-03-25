@@ -71,7 +71,7 @@ jobs:
         with:
           files: ./docker-bake.hcl
           source: .
-          push: false
+          push: true
           load: true # <--- Ensure the image is loaded into the local Docker daemon
           set: |
             *.context=.
@@ -86,8 +86,7 @@ jobs:
 
       - name: Create and push multiarch manifest
         run: |
-              docker buildx imagetools create --append --debug -t  ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} \
-              ${{ env.IMAGE_NAME }}
+              docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }} ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} 
   
       - name: Push Docker Image
         run: |
