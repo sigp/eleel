@@ -68,6 +68,7 @@ jobs:
               files: ./docker-bake.hcl
               source: .
               push: false
+              load: true # <--- Ensure the image is loaded into the local Docker daemon
               set: |
                 *.context=.
                 *.tags=${{ github.repository }}:${{ github.ref_name }}
