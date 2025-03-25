@@ -75,21 +75,38 @@ jobs:
           load: true # <--- Ensure the image is loaded into the local Docker daemon
           set: |
             *.context=.
-            *.tags=${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} 
+            *.tags=${{ env.IMAGE_NAME }}:${{ env.VERSION }}${{ env.VERSION_SUFFIX}}-${{ env.SHORT_ARCH }}
         env:
           ARCH: ${{ env.SHORT_ARCH }}
           GITHUB_REPO: ${{ github.repository }}
           DOCKER_BUILD_RECORD_UPLOAD: true
 
-      - name: Debug Docker Images
-        run: docker images
+      # - name: Debug Docker Images
+      #   run: docker images
 
-      - name: Create and push multiarch manifest
-        run: |
-              docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }}  ${{ env.IMAGE_NAME }}
+      # - name: Create and push multiarch manifest
+      #   run: |
+      #         docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }}  ${{ env.IMAGE_NAME }}
   
-      - name: Push Docker Image
-        run: |
-            docker push ${{ github.repository }}:${{ github.ref_name }}
+      # - name: Push Docker Image
+      #   run: |
+      #       docker push ${{ github.repository }}:${{ github.ref_name }}
 
- 
+  docker-multiarch-manifest:
+      name: docker-multiarch-manifest
+      runs-on: ubuntu-24.04
+      needs: [build-docker, extract-version]
+      env:
+        # We need to enable experimental docker features in order to use `docker manifest`
+        DOCKER_CLI_EXPERIMENTAL: enabled
+        VERSION: ${{ needs.extract-version.outputs.VERSION }}
+        VERSION_SUFFIX: ${{ needs.extract-version.outputs.VERSION_SUFFIX }}
+      steps:
+        - name: Dockerhub login
+          run: |
+            echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+        - name: Create and push multiarch manifest
+          run: |
+            docker buildx imagetools create -t ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX} \
+                ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-amd64; 
+#               ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-arm64;
