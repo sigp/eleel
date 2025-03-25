@@ -17,6 +17,7 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_BUILD_SUMMARY: true
   REPO_NAME: $GITHUB_REPOSITORY
+  IMAGE_NAME: ${{ github.repository }}:${{ github.ref_name }}
 
 jobs:
   extract-version:
@@ -66,7 +67,7 @@ jobs:
               load: true # <--- Ensure the image is loaded into the local Docker daemon
               set: |
                 *.context=.
-                *.tags=${{ github.repository }}:${{ github.ref_name }}
+                *.tags=${{ env.IMAGE_NAME }}:${{ env.VERSION }}${{ env.VERSION_SUFFIX}}
             env:
               ARCH: ${{ env.SHORT_ARCH }}
               GITHUB_REPO: ${{ github.repository }}
@@ -81,11 +82,12 @@ jobs:
             VERSION: ${{ needs.extract-version.outputs.VERSION }}
             VERSION_SUFFIX: ${{ needs.extract-version.outputs.VERSION_SUFFIX }}
           steps:
-            - name: Dockerhub login
-              run: |
-                echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+            - name: Login to DockerHub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ env.DOCKER_USERNAME }}
+                password: ${{ env.DOCKER_PASSWORD }}
             - name: Create and push multiarch manifest
               run: |
-                docker buildx imagetools create -t ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX} \
-                  ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-amd64; 
-                  ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}-arm64;
+                docker buildx imagetools create -t ${IMAGE_NAME}:${VERSION}${VERSION_SUFFIX}
+                  
