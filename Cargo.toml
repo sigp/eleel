@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-execution_layer = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.0" }
+execution_layer = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.4" }
 tree_hash = "0.5.1"
 tree_hash_derive = "0.5.1"
-task_executor = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.0" }
-eth2_network_config = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.0" }
-eth2 = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.0" }
+task_executor = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.4" }
+eth2_network_config = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.4" }
+eth2 = { git = "https://github.com/sigp/lighthouse", tag = "v7.0.0-beta.4" }
 ethereum_serde_utils = "0.5.1"
 tokio = { version = "1.0.0", features = ["rt-multi-thread"] }
 axum = { version = "0.6.10", features = ["headers"] }

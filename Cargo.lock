@@ -785,7 +785,7 @@ dependencies = [
 [[package]]
 name = "bls"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "arbitrary",
@@ -842,7 +842,7 @@ dependencies = [
 [[package]]
 name = "builder_client"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "eth2",
  "ethereum_ssz",
@@ -1059,7 +1059,7 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 [[package]]
 name = "clap_utils"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "clap",
@@ -1091,7 +1091,7 @@ checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 [[package]]
 name = "compare_fields"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "itertools 0.10.5",
 ]
@@ -1099,7 +1099,7 @@ dependencies = [
 [[package]]
 name = "compare_fields_derive"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -1613,7 +1613,7 @@ dependencies = [
 [[package]]
 name = "directory"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "clap",
  "clap_utils",
@@ -1910,7 +1910,7 @@ dependencies = [
 [[package]]
 name = "eth2"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "derivative",
  "either",
@@ -1939,7 +1939,7 @@ dependencies = [
 [[package]]
 name = "eth2_config"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "paste",
  "types",
@@ -1948,7 +1948,7 @@ dependencies = [
 [[package]]
 name = "eth2_interop_keypairs"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "bls",
  "ethereum_hashing 0.7.0",
@@ -1961,11 +1961,11 @@ dependencies = [
 [[package]]
 name = "eth2_key_derivation"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "bls",
  "num-bigint-dig",
- "ring 0.16.20",
+ "ring 0.17.8",
  "sha2 0.9.9",
  "zeroize",
 ]
@@ -1973,7 +1973,7 @@ dependencies = [
 [[package]]
 name = "eth2_keystore"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "aes 0.7.5",
  "bls",
@@ -1995,7 +1995,7 @@ dependencies = [
 [[package]]
 name = "eth2_network_config"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "bytes",
  "discv5",
@@ -2216,7 +2216,7 @@ dependencies = [
 [[package]]
 name = "execution_layer"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-consensus",
  "alloy-primitives",
@@ -2351,7 +2351,7 @@ dependencies = [
 [[package]]
 name = "filesystem"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "winapi",
  "windows-acl",
@@ -2372,7 +2372,7 @@ dependencies = [
 [[package]]
 name = "fixed_bytes"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "safe_arith",
@@ -2418,7 +2418,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "fork_choice"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "ethereum_ssz",
  "ethereum_ssz_derive",
@@ -2665,7 +2665,7 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 [[package]]
 name = "gossipsub"
 version = "0.5.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "async-channel",
  "asynchronous-codec",
@@ -3473,7 +3473,7 @@ dependencies = [
 [[package]]
 name = "int_to_bytes"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "bytes",
 ]
@@ -3663,7 +3663,7 @@ dependencies = [
 [[package]]
 name = "kzg"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "arbitrary",
  "c-kzg",
@@ -4190,7 +4190,7 @@ dependencies = [
 [[package]]
 name = "lighthouse_network"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -4240,7 +4240,7 @@ dependencies = [
 [[package]]
 name = "lighthouse_version"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "git-version",
  "target_info",
@@ -4289,7 +4289,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 [[package]]
 name = "logging"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "chrono",
  "metrics",
@@ -4342,7 +4342,7 @@ dependencies = [
 [[package]]
 name = "lru_cache"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "fnv",
 ]
@@ -4398,7 +4398,7 @@ dependencies = [
 [[package]]
 name = "merkle_proof"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "ethereum_hashing 0.7.0",
@@ -4432,7 +4432,7 @@ dependencies = [
 [[package]]
 name = "metrics"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "prometheus",
 ]
@@ -5183,7 +5183,7 @@ dependencies = [
 [[package]]
 name = "pretty_reqwest_error"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "reqwest",
  "sensitive_url",
@@ -5251,7 +5251,6 @@ dependencies = [
  "lazy_static",
  "memchr",
  "parking_lot",
- "protobuf",
  "thiserror 1.0.69",
 ]
 
@@ -5312,7 +5311,7 @@ dependencies = [
 [[package]]
 name = "proto_array"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "ethereum_ssz",
  "ethereum_ssz_derive",
@@ -5322,12 +5321,6 @@ dependencies = [
  "superstruct",
  "types",
 ]
-
-[[package]]
-name = "protobuf"
-version = "2.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
 
 [[package]]
 name = "quick-error"
@@ -6064,7 +6057,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 [[package]]
 name = "safe_arith"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 
 [[package]]
 name = "salsa20"
@@ -6239,7 +6232,7 @@ dependencies = [
 [[package]]
 name = "sensitive_url"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "serde",
  "url",
@@ -6455,7 +6448,7 @@ dependencies = [
 [[package]]
 name = "slashing_protection"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "arbitrary",
  "ethereum_serde_utils 0.7.0",
@@ -6574,7 +6567,7 @@ dependencies = [
 [[package]]
 name = "slot_clock"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "metrics",
  "parking_lot",
@@ -6682,7 +6675,7 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "state_processing"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "arbitrary",
  "bls",
@@ -6714,7 +6707,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "store"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "bls",
  "db-key",
@@ -6797,7 +6790,7 @@ dependencies = [
 [[package]]
 name = "swap_or_not_shuffle"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "ethereum_hashing 0.7.0",
@@ -6912,7 +6905,7 @@ checksum = "c63f48baada5c52e65a29eef93ab4f8982681b67f9e8d29c7b05abcfec2b9ffe"
 [[package]]
 name = "task_executor"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "async-channel",
  "futures",
@@ -6960,7 +6953,7 @@ dependencies = [
 [[package]]
 name = "test_random_derive"
 version = "0.2.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -7443,7 +7436,7 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 [[package]]
 name = "types"
 version = "0.2.1"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -7600,7 +7593,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 [[package]]
 name = "unused_port"
 version = "0.1.0"
-source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.0#1888be554cb365c419aac993528bc6697728f793"
+source = "git+https://github.com/sigp/lighthouse?tag=v7.0.0-beta.4#04868027a66957429e66eb5b22973672f7ce921b"
 dependencies = [
  "lru_cache",
  "parking_lot",
