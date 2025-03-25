@@ -31,6 +31,8 @@ jobs:
           #   cpu_arch: [aarch64, x86_64]
         steps:
 
+
+
           - uses: actions/checkout@v4
           - name: Update Rust
             run: rustup update stable
@@ -39,6 +41,9 @@ jobs:
             with:
               username: ${{ env.DOCKER_USERNAME }}
               password: ${{ env.DOCKER_PASSWORD }}
+
+          - name: Debug IMAGE_NAME
+            run: echo "IMAGE_NAME=${{ env.IMAGE_NAME }}"
               
           - name: Cross build binaries
             run: |
