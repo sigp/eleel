@@ -86,7 +86,7 @@ jobs:
 
       - name: Create and push multiarch manifest
         run: |
-              docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }} ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} 
+              docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }}  ${{ env.IMAGE_NAME }}
   
       - name: Push Docker Image
         run: |
