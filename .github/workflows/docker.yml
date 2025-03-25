@@ -27,7 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cpu_arch: [aarch64, x86_64]
+        # cpu_arch: [aarch64, x86_64]
+        cpu_arch: [aarch64]
     steps:
 
       - uses: actions/checkout@v4
@@ -79,6 +80,9 @@ jobs:
           ARCH: ${{ env.SHORT_ARCH }}
           GITHUB_REPO: ${{ github.repository }}
           DOCKER_BUILD_RECORD_UPLOAD: true
+
+      - name: Debug Docker Images
+        run: docker images
 
       - name: Create and push multiarch manifest
         run: |
