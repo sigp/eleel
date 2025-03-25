@@ -74,7 +74,7 @@ jobs:
           load: true # <--- Ensure the image is loaded into the local Docker daemon
           set: |
             *.context=.
-            *.tags=${{ env.IMAGE_NAME }}
+            *.tags=${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} 
         env:
           ARCH: ${{ env.SHORT_ARCH }}
           GITHUB_REPO: ${{ github.repository }}
@@ -82,7 +82,7 @@ jobs:
 
       - name: Create and push multiarch manifest
         run: |
-              docker buildx imagetools create -t ${{ env.IMAGE_NAME }} --append --debug
+              docker buildx imagetools create --append --debug -t ${{ env.IMAGE_NAME }} ${{ env.IMAGE_NAME }}-${{ env.SHORT_ARCH }} 
   
       - name: Push Docker Image
         run: |
