@@ -74,25 +74,37 @@ jobs:
                 *.context=.
                 *.tags=${{ env.IMAGE_NAME }}
             env:
-              ARCH: ${{ env.SHORT_ARCH }}
               GITHUB_REPO: ${{ github.repository }}
               DOCKER_BUILD_RECORD_UPLOAD: true
-  docker-multiarch-manifest:
-          name: docker-multiarch-manifest
-          runs-on: ubuntu-24.04
-          needs: [build-docker, extract-version]
-          env:
-            # We need to enable experimental docker features in order to use `docker manifest`
-            DOCKER_CLI_EXPERIMENTAL: enabled
-            VERSION: ${{ needs.extract-version.outputs.VERSION }}
-            VERSION_SUFFIX: ${{ needs.extract-version.outputs.VERSION_SUFFIX }}
-          steps:
-            - name: Login to DockerHub
-              uses: docker/login-action@v3
-              with:
+
+          - name: Login to DockerHub
+            uses: docker/login-action@v3
+            with:
                 username: ${{ env.DOCKER_USERNAME }}
                 password: ${{ env.DOCKER_PASSWORD }}
-            - name: Create and push multiarch manifest
-              run: |
-                docker buildx imagetools create -t ${{ env.IMAGE_NAME }} --append --debug
+
+          - name: Create and push multiarch manifest
+            run: |
+                docker buildx imagetools create -t ${{ env.IMAGE_NAME }}  --append --debug \
+                ${{ env.IMAGE_NAME }}-arm64 \
+                ${{ env.IMAGE_NAME }}-amd64
+
+  # docker-multiarch-manifest:
+  #         name: docker-multiarch-manifest
+  #         runs-on: ubuntu-24.04
+  #         needs: [build-docker, extract-version]
+  #         env:
+  #           # We need to enable experimental docker features in order to use `docker manifest`
+  #           DOCKER_CLI_EXPERIMENTAL: enabled
+  #           VERSION: ${{ needs.extract-version.outputs.VERSION }}
+  #           VERSION_SUFFIX: ${{ needs.extract-version.outputs.VERSION_SUFFIX }}
+  #         steps:
+  #           - name: Login to DockerHub
+  #             uses: docker/login-action@v3
+  #             with:
+  #               username: ${{ env.DOCKER_USERNAME }}
+  #               password: ${{ env.DOCKER_PASSWORD }}
+  #           - name: Create and push multiarch manifest
+  #             run: |
+  #               docker buildx imagetools create -t ${{ env.IMAGE_NAME }} --append --debug
                   
