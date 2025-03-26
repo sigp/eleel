@@ -86,8 +86,8 @@ jobs:
           - name: Create and push multiarch manifest
             run: |
                 docker buildx imagetools create -t ${{ env.IMAGE_NAME }}  --append --debug \
-                ${{ env.IMAGE_NAME }}-arm64 \
-                ${{ env.IMAGE_NAME }}-amd64
+                ${{ github.repository }}-arm64 \
+                ${{ github.repository }}-amd64
 
   # docker-multiarch-manifest:
   #         name: docker-multiarch-manifest
