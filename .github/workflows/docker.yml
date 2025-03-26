@@ -6,7 +6,6 @@ on:
     - main
     - stable
     - unstable
-    - make-and-bake
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
