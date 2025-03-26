@@ -2,9 +2,10 @@
 # It assumes the eleel binary has already been
 # compiled for `$TARGETPLATFORM` and moved to `./bin`.
 FROM --platform=$TARGETPLATFORM ubuntu:24.04
+ARG TARGET_ARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  libssl-dev \
-  ca-certificates \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-ADD ./bin/eleel /usr/local/bin/eleel
+    libssl-dev \
+    ca-certificates \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+ADD ./target/$TARGET_ARCH/release/eleel /usr/local/bin/eleel
