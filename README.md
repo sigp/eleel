@@ -17,6 +17,14 @@ Eleel is written in Rust and makes use of components from [Lighthouse][].
 
 A binary will be installed to `~/.cargo/bin/eleel`.
 
+### Build docker images
+
+### Using `bake`
+
+See https://docs.docker.com/build/building/multi-platform/.
+
+`docker buildx bake -f docker-bake.hcl`
+
 ## Getting started
 
 Eleel needs to connect to a _real_ execution node, e.g. Geth/Nethermind/Besu. You
