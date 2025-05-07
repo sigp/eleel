@@ -79,6 +79,9 @@ pub struct Config {
     /// Maximum size of JSON-RPC message to accept from any connected consensus node.
     #[arg(long, value_name = "MEGABYTES", default_value = "128")]
     pub body_limit_mb: usize,
+    /// Maximum timeout that need to wait for a response from the execution
+    #[arg(long, value_name = "MILLIS", default_value = "15000")]
+    pub ee_timeout_millis: u64,
 }
 
 #[derive(Deserialize, Serialize)]
