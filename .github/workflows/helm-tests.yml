@@ -1,0 +1,19 @@
+name: Helm Chart Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+      
+      - name: Run Helm unit tests
+        run: helm unittest charts/eleel -f "charts/eleel/tests/*_test.yaml"

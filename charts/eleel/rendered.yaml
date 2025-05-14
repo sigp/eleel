@@ -1,0 +1,66 @@
+---
+# Source: eleel/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eleel-test
+  labels:
+    app.kubernetes.io/name: eleel
+    app.kubernetes.io/instance: eleel-test
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: eleel-0.1.0
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eleel
+      app.kubernetes.io/instance: eleel-test
+  serviceName: eleel-test
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eleel
+        app.kubernetes.io/instance: eleel-test
+    spec:
+      containers:
+        - name: eleel
+          image: "eleel:test"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8552
+              protocol: TCP
+          env:
+            - name: RUST_LOG
+              value: "eleel=debug"
+            - name: LISTEN_ADDRESS
+              value: "0.0.0.0"
+            - name: LISTEN_PORT
+              value: "8552"
+            - name: EE_URL
+              value: "http://test-engine:8551"
+            - name: NETWORK
+              value: "mainnet"
+            - name: EE_JWT_SECRET
+              value: "/test-secrets/ee.jwt"
+            - name: CONTROLLER_JWT_SECRET
+              value: "/test-secrets/controller.jwt"
+            - name: CLIENT_JWT_SECRETS
+              value: "/test-secrets/clients.toml"
+          volumeMounts:
+            - name: jwt-secrets
+              mountPath: /test-secrets
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+      volumes:
+        - name: jwt-secrets
+          secret:
+            secretName: "eleel-test-jwt-secrets"
