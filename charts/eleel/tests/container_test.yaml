@@ -1,0 +1,18 @@
+suite: test eleel container
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: should configure container correctly
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: eleel
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8552
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: RUST_LOG
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: eleel=debug

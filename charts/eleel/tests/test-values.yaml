@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: eleel
+  tag: test
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8552
+
+config:
+  listenAddress: "0.0.0.0"
+  listenPort: "8552"
+  eeUrl: "http://test-engine:8551"
+  network: "mainnet"
+
+secrets:
+  eeJwtSecret:
+    mountPath: "/test-secrets"
+    fileName: "ee.jwt"
+  controllerJwtSecret:
+    mountPath: "/test-secrets"
+    fileName: "controller.jwt"
+  clientJwtSecrets:
+    mountPath: "/test-secrets"
+    fileName: "clients.toml"

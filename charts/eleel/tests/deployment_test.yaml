@@ -1,0 +1,20 @@
+suite: test statefulset
+templates:
+  - statefulset.yaml
+tests:
+  - it: should create statefulset with correct properties
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - matchRegex:
+          path: metadata.name
+          pattern: .+-eleel$
+      - matchRegex:
+          path: spec.serviceName
+          pattern: .+-eleel$
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: eleel

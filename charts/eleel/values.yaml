@@ -1,0 +1,48 @@
+# Default values for eleel.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: eleel
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8552
+
+config:
+  listenAddress: "127.0.0.1"
+  listenPort: "8552"
+  eeUrl: "http://localhost:8551"
+  network: "mainnet"
+
+secrets:
+  eeJwtSecret:
+    mountPath: "/secrets"
+    fileName: "ee.jwt"
+  controllerJwtSecret:
+    mountPath: "/secrets"
+    fileName: "controller.jwt"
+  clientJwtSecrets:
+    mountPath: "/secrets"
+    fileName: "clients.toml"
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
